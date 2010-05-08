@@ -1,4 +1,4 @@
-module Clepsydra
+module Clockwork
 	class Job
 		def initialize(span, &block)
 			@secs = parse_span(span)
