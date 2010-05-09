@@ -49,20 +49,32 @@ module Clockwork
 	extend self
 
 	def every(span, options={}, &block)
+		event = Event.new(span, options, &block)
 		@@events ||= []
-		@@events << Event.new(span, options, &block)
+		@@events << event
+		event
 	end
 
 	def run
 		loop do
-			tick(Time.now)
+			tick
 			sleep 1
 		end
 	end
 
-	def tick(t)
-		@@events.each do |event|
-			event.run(t) if event.time?(t)
+	def tick(t=Time.now)
+		to_run = @@events.select do |event|
+			event.time?(t)
 		end
+
+		to_run.each do |event|
+			event.run(t)
+		end
+
+		to_run
+	end
+
+	def clear!
+		@@events = []
 	end
 end
