@@ -1,5 +1,5 @@
 module Clockwork
-	class Job
+	class Event
 		def initialize(span, options={}, &block)
 			@secs = parse_span(span)
 			@at = parse_at(options[:at])
@@ -49,14 +49,14 @@ module Clockwork
 	extend self
 
 	def every(span, options={}, &block)
-		@@clocks ||= []
-		@@clocks << Job.new(span, options, &block)
+		@@events ||= []
+		@@events << Event.new(span, options, &block)
 	end
 
 	def run
 		loop do
-			@@clocks.each do |clock|
-				clock.run if clock.time?
+			@@events.each do |event|
+				event.run if event.time?
 			end
 			sleep 1
 		end
