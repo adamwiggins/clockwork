@@ -7,15 +7,15 @@ module Clockwork
 			@block = block
 		end
 
-		def time?(t=Time.now)
+		def time?(t)
 			ellapsed_ready = (@last.nil? or (t - @last).to_i >= @secs)
 			time_ready = (@at.nil? or (t.hour == @at[0] and t.min == @at[1]))
 			ellapsed_ready and time_ready
 		end
 
-		def run
+		def run(t)
 			@block.call
-			@last = Time.now
+			@last = t
 		end
 
 		class FailedToParse < RuntimeError; end
@@ -55,10 +55,14 @@ module Clockwork
 
 	def run
 		loop do
-			@@events.each do |event|
-				event.run if event.time?
-			end
+			tick(Time.now)
 			sleep 1
+		end
+	end
+
+	def tick(t)
+		@@events.each do |event|
+			event.run(t) if event.time?(t)
 		end
 	end
 end
