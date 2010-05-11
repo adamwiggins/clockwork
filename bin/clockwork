@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
+require 'clockwork'
+include Clockwork
+
+usage = "clockwork <schedule.rb>"
+file = ARGV.shift or abort usage
+
+require file
+
+trap('INT') do
+	puts "\rExiting"
+	exit
+end
+
+run
