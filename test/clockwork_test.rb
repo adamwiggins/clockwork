@@ -37,4 +37,14 @@ class ClockworkTest < Test::Unit::TestCase
 		assert_wont_run(t+30*60)
 		assert_will_run(t+60*60)
 	end
+
+	test "once a day at 16:20" do
+		Clockwork.every('1d', :at => '16:20') { }
+
+		assert_wont_run Time.parse('jan 1 2010 16:19:59')
+		assert_will_run Time.parse('jan 1 2010 16:20:00')
+		assert_wont_run Time.parse('jan 1 2010 16:20:01')
+		assert_wont_run Time.parse('jan 2 2010 16:19:59')
+		assert_will_run Time.parse('jan 2 2010 16:20:00')
+	end
 end
