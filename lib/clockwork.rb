@@ -16,6 +16,19 @@ module Clockwork
 		def run(t)
 			@block.call
 			@last = t
+		rescue => e
+			STDERR.puts exception_message(e)
+		end
+
+		def exception_message(e)
+			msg = [ "Exception #{e.class} -> #{e.message}" ]
+
+			base = File.expand_path(Dir.pwd) + '/'
+			e.backtrace.each do |t|
+				msg << "   #{File.expand_path(t).gsub(/#{base}/, '')}"
+			end
+
+			msg.join("\n")
 		end
 
 		class FailedToParse < RuntimeError; end
