@@ -1,7 +1,8 @@
 module Clockwork
 	class Event
-		def initialize(span, options={}, &block)
+		def initialize(span, job, block, options={})
 			@secs = parse_span(span)
+			@job = job
 			@at = parse_at(options[:at])
 			@last = nil
 			@block = block
@@ -14,7 +15,7 @@ module Clockwork
 		end
 
 		def run(t)
-			@block.call
+			@block.call(@job)
 			@last = t
 		rescue => e
 			STDERR.puts exception_message(e)
@@ -61,8 +62,12 @@ module Clockwork
 
 	extend self
 
-	def every(span, options={}, &block)
-		event = Event.new(span, options, &block)
+	def handler(&block)
+		@@handler = block
+	end
+
+	def every(span, job, options={})
+		event = Event.new(span, job, @@handler, options)
 		@@events ||= []
 		@@events << event
 		event

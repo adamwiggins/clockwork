@@ -4,6 +4,7 @@ require 'contest'
 class ClockworkTest < Test::Unit::TestCase
 	setup do
 		Clockwork.clear!
+		Clockwork.handler { }
 	end
 
 	def assert_will_run(t)
@@ -15,7 +16,7 @@ class ClockworkTest < Test::Unit::TestCase
 	end
 
 	test "once a minute" do
-		Clockwork.every('1m') { }
+		Clockwork.every('1m', 'myjob')
 
 		assert_will_run(t=Time.now)
 		assert_wont_run(t+30)
@@ -23,7 +24,7 @@ class ClockworkTest < Test::Unit::TestCase
 	end
 
 	test "every three minutes" do
-		Clockwork.every('3m') { }
+		Clockwork.every('3m', 'myjob')
 
 		assert_will_run(t=Time.now)
 		assert_wont_run(t+2*60)
@@ -31,7 +32,7 @@ class ClockworkTest < Test::Unit::TestCase
 	end
 
 	test "once an hour" do
-		Clockwork.every('1h') { }
+		Clockwork.every('1h', 'myjob')
 
 		assert_will_run(t=Time.now)
 		assert_wont_run(t+30*60)
@@ -39,7 +40,7 @@ class ClockworkTest < Test::Unit::TestCase
 	end
 
 	test "once a day at 16:20" do
-		Clockwork.every('1d', :at => '16:20') { }
+		Clockwork.every('1d', 'myjob', :at => '16:20')
 
 		assert_wont_run Time.parse('jan 1 2010 16:19:59')
 		assert_will_run Time.parse('jan 1 2010 16:20:00')

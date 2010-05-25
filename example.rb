@@ -1,8 +1,12 @@
 require 'clockwork'
 include Clockwork
 
-every('10s') { puts 'every 10 secs' }
-every('1m') { puts 'every minute' }
-every('1h') { puts 'every hour' }
+handler do |job|
+	puts "Running job: #{job}"
+end
 
-every('1d', :at => '00:00') { puts 'once a day at midnight' }
+every('10s', 'run.me.every.10.seconds')
+every('1m', 'run.me.every.minute')
+every('1h', 'run.me.every.hour')
+
+every('1d', 'run.me.at.midnight', :at => '00:00')
