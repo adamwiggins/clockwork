@@ -16,7 +16,7 @@ class ClockworkTest < Test::Unit::TestCase
 	end
 
 	test "once a minute" do
-		Clockwork.every('1m', 'myjob')
+		Clockwork.every(1.minute, 'myjob')
 
 		assert_will_run(t=Time.now)
 		assert_wont_run(t+30)
@@ -24,7 +24,7 @@ class ClockworkTest < Test::Unit::TestCase
 	end
 
 	test "every three minutes" do
-		Clockwork.every('3m', 'myjob')
+		Clockwork.every(3.minutes, 'myjob')
 
 		assert_will_run(t=Time.now)
 		assert_wont_run(t+2*60)
@@ -32,7 +32,7 @@ class ClockworkTest < Test::Unit::TestCase
 	end
 
 	test "once an hour" do
-		Clockwork.every('1h', 'myjob')
+		Clockwork.every(1.hour, 'myjob')
 
 		assert_will_run(t=Time.now)
 		assert_wont_run(t+30*60)
@@ -40,7 +40,7 @@ class ClockworkTest < Test::Unit::TestCase
 	end
 
 	test "once a day at 16:20" do
-		Clockwork.every('1d', 'myjob', :at => '16:20')
+		Clockwork.every(1.day, 'myjob', :at => '16:20')
 
 		assert_wont_run Time.parse('jan 1 2010 16:19:59')
 		assert_will_run Time.parse('jan 1 2010 16:20:00')

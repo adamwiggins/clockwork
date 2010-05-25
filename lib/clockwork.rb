@@ -1,7 +1,7 @@
 module Clockwork
 	class Event
-		def initialize(span, job, block, options={})
-			@secs = parse_span(span)
+		def initialize(period, job, block, options={})
+			@period = period
 			@job = job
 			@at = parse_at(options[:at])
 			@last = nil
@@ -9,7 +9,7 @@ module Clockwork
 		end
 
 		def time?(t)
-			ellapsed_ready = (@last.nil? or (t - @last).to_i >= @secs)
+			ellapsed_ready = (@last.nil? or (t - @last).to_i >= @period)
 			time_ready = (@at.nil? or (t.hour == @at[0] and t.min == @at[1]))
 			ellapsed_ready and time_ready
 		end
@@ -32,24 +32,6 @@ module Clockwork
 			msg.join("\n")
 		end
 
-		class FailedToParse < RuntimeError; end
-
-		def parse_span(span)
-			m = span.match(/^(\d+)([smhd])$/)
-			raise FailedToParse, span unless m
-			ordinal, magnitude = m[1].to_i, m[2]
-			ordinal * magnitude_multiplier[magnitude]
-		end
-
-		def magnitude_multiplier
-			{
-				's' => 1,
-				'm' => 60,
-				'h' => 60*60,
-				'd' => 24*60*60
-			}
-		end
-
 		def parse_at(at)
 			return unless at
 			m = at.match(/^(\d\d):(\d\d)$/)
@@ -66,8 +48,8 @@ module Clockwork
 		@@handler = block
 	end
 
-	def every(span, job, options={})
-		event = Event.new(span, job, @@handler, options)
+	def every(period, job, options={})
+		event = Event.new(period, job, @@handler, options)
 		@@events ||= []
 		@@events << event
 		event
@@ -95,4 +77,18 @@ module Clockwork
 	def clear!
 		@@events = []
 	end
+end
+
+class Numeric
+	def seconds; self; end
+	alias :second :seconds
+
+	def minutes; self * 60; end
+	alias :minute :minutes
+
+	def hours; self * 3600; end
+	alias :hour :hours
+
+	def days; self * 86400; end
+	alias :day :days
 end
