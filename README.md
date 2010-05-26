@@ -4,11 +4,12 @@ Clockwork - a clock process to replace cron
 Cron is non-ideal for running scheduled application tasks, especially in an app
 deployed to multiple machines.  [More details.](http://adam.heroku.com/past/2010/4/13/rethinking_cron/)
 
-Clockwork is a lightweight, long-running Ruby process which sits alongside your
-web processes (Mongrel/Thin) and your worker processes (DJ/Resque/Minion/Stalker)
-to schedule recurring work at particular times or dates.  For example,
-refreshing feeds on an hourly basis, or send reminder emails on a nightly
-basis, or generating invoices once a month on the 1st.
+Clockwork is a cron replacement.  It runs as a lightweight, long-running Ruby
+process which sits alongside your web processes (Mongrel/Thin) and your worker
+processes (DJ/Resque/Minion/Stalker) to schedule recurring work at particular
+times or dates.  For example, refreshing feeds on an hourly basis, or send
+reminder emails on a nightly basis, or generating invoices once a month on the
+1st.
 
 Quickstart
 ----------
@@ -37,16 +38,16 @@ Run it with the clockwork binary:
 Use with queueing
 -----------------
 
-Clockwork only makes sense as a place to schedule work to be done, not to do
-the work.  It avoids locking by running as a single process, but this makes it
-impossible to parallelize.  For doing the work, you should be using a job
-queueing system, such as
+The clock process only makes sense as a place to schedule work to be done, not
+to do the work.  It avoids locking by running as a single process, but this
+makes it impossible to parallelize.  For doing the work, you should be using a
+job queueing system, such as
 [Delayed Job](http://www.therailsway.com/2009/7/22/do-it-later-with-delayed-job),
 [Beanstalk/Stalker](http://adam.heroku.com/past/2010/4/24/beanstalk_a_simple_and_fast_queueing_backend/),
 [RabbitMQ/Minion](http://adamblog.heroku.com/past/2009/9/28/background_jobs_with_rabbitmq_and_minion/), or
-[Resque](http://github.com/blog/542-introducing-resque).  This design allows
-a simple clock process with no locks, but also offers near infinite
-horizontal scalability.
+[Resque](http://github.com/blog/542-introducing-resque).  This design allows a
+simple clock process with no locks, but also offers near infinite horizontal
+scalability.
 
 For example, if you're using Beanstalk/Staker:
 
@@ -81,25 +82,28 @@ The handler typically looks like this:
 
     handler { |job| enqueue_your_job(job) }
 
-This block will be invoked every time an event is triggered, with the job name passed in.  In most cases, you should be able to pass the job name directly through to your queueing system.
+This block will be invoked every time an event is triggered, with the job name
+passed in.  In most cases, you should be able to pass the job name directly
+through to your queueing system.
 
 The second part of the file are the events, which roughly resembles a crontab:
 
     every(5.minutes, 'thing.do')
     every(1.hour, 'otherthing.do')
 
-In the top case, an event will be triggered once every five minutes, passing
-the job name 'thing.do' into the handler.  The handler shown above will thus
-call enqueue_your_job('thing.do').
+In the first line of this example, an event will be triggered once every five
+minutes, passing the job name 'thing.do' into the handler.  The handler shown
+above would thus call enqueue_your_job('thing.do').
 
 You can also pass a custom block to the handler, for job queueing systems that
-rely on classes rather than job names (e.g. DJ and Resque).  In this case, you
+rely on classes rather than job names (i.e. DJ and Resque).  In this case, you
 need not define a general event handler, and instead provide one with each
 event:
 
     every(5.minutes, 'thing.do') { Thing.send_later(:do) }
 
-If you provide a custom handler for the block, the job name is used only for logging.
+If you provide a custom handler for the block, the job name is used only for
+logging.
 
 You can also use blocks to do more complex checks:
 
@@ -115,8 +119,8 @@ deployment.  For example, if your app is running on three VPS machines (two app
 servers and one database), your app machines might have the following process
 topography:
 
-* Machine 1: 3 web (thin start), 3 workers (rake jobs:work), 1 clock (clockwork clock.rb)
-* Machine 2: 3 web (thin start), 3 workers (rake jobs:work)
+* App server 1: 3 web (thin start), 3 workers (rake jobs:work), 1 clock (clockwork clock.rb)
+* App server 2: 3 web (thin start), 3 workers (rake jobs:work)
 
 You should use Monit, God, Upstart, or Inittab to keep your clock process
 running the same way you keep your web and workers running.
@@ -127,6 +131,8 @@ Meta
 Created by Adam Wiggins
 
 Inspired by [rufus-scheduler](http://rufus.rubyforge.org/rufus-scheduler/) and [http://github.com/bvandenbos/resque-scheduler](resque-scehduler)
+
+Design assistance from Peter van Hardenberg and Matthew Soldo
 
 Released under the MIT License: http://www.opensource.org/licenses/mit-license.php
 
