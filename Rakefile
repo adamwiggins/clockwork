@@ -14,3 +14,9 @@ Jeweler::Tasks.new do |s|
 end
 
 Jeweler::GemcutterTasks.new
+
+task 'test' do
+	sh "turn"
+end
+
+task :build => :test
