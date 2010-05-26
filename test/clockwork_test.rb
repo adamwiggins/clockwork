@@ -1,6 +1,11 @@
 require File.dirname(__FILE__) + '/../lib/clockwork'
 require 'contest'
 
+module Clockwork
+	def log(msg)
+	end
+end
+
 class ClockworkTest < Test::Unit::TestCase
 	setup do
 		Clockwork.clear!

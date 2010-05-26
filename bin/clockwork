@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+STDERR.sync = STDOUT.sync = true
+
 $LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
 require 'clockwork'
 include Clockwork

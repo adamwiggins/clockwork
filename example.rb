@@ -2,7 +2,7 @@ require 'clockwork'
 include Clockwork
 
 handler do |job|
-	puts "Running job: #{job}"
+	puts "Queueing job: #{job}"
 end
 
 every(10.seconds, 'run.me.every.10.seconds')

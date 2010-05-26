@@ -8,6 +8,10 @@ module Clockwork
 			@block = block
 		end
 
+		def to_s
+			@job
+		end
+
 		def time?(t)
 			ellapsed_ready = (@last.nil? or (t - @last).to_i >= @period)
 			time_ready = (@at.nil? or (t.hour == @at[0] and t.min == @at[1]))
@@ -63,10 +67,15 @@ module Clockwork
 	end
 
 	def run
+		log "Starting clock for #{@@events.size} events: [ " + @@events.map { |e| e.to_s }.join(' ') + " ]"
 		loop do
 			tick
 			sleep 1
 		end
+	end
+
+	def log(msg)
+		puts "[#{Time.now}] #{msg}"
 	end
 
 	def tick(t=Time.now)
@@ -75,6 +84,7 @@ module Clockwork
 		end
 
 		to_run.each do |event|
+			log "-> #{event}"
 			event.run(t)
 		end
 
