@@ -48,4 +48,26 @@ class ClockworkTest < Test::Unit::TestCase
 		assert_wont_run Time.parse('jan 2 2010 16:19:59')
 		assert_will_run Time.parse('jan 2 2010 16:20:00')
 	end
+
+	test "aborts when no handler defined" do
+		Clockwork.clear!
+		assert_raise(Clockwork::NoHandlerDefined) do
+			Clockwork.every(1.minute, 'myjob')
+		end
+	end
+
+	test "general handler" do
+		$set_me = 0
+		Clockwork.handler { $set_me = 1 }
+		Clockwork.every(1.minute, 'myjob')
+		Clockwork.tick(Time.now)
+		assert_equal 1, $set_me
+	end
+
+	test "event-specific handler" do
+		$set_me = 0
+		Clockwork.every(1.minute, 'myjob') { $set_me = 2 }
+		Clockwork.tick(Time.now)
+		assert_equal 2, $set_me
+	end
 end

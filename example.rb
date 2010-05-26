@@ -10,3 +10,7 @@ every(1.minute, 'run.me.every.minute')
 every(1.hour, 'run.me.every.hour')
 
 every(1.day, 'run.me.at.midnight', :at => '00:00')
+
+every(1.day, 'custom.event.handler', :at => '00:30') do
+	puts "This event has its own handler"
+end

@@ -48,8 +48,15 @@ module Clockwork
 		@@handler = block
 	end
 
-	def every(period, job, options={})
-		event = Event.new(period, job, @@handler, options)
+	class NoHandlerDefined < RuntimeError; end
+
+	def get_handler
+		raise NoHandlerDefined unless (defined?(@@handler) and @@handler)
+		@@handler
+	end
+
+	def every(period, job, options={}, &block)
+		event = Event.new(period, job, block || get_handler, options)
 		@@events ||= []
 		@@events << event
 		event
@@ -76,6 +83,7 @@ module Clockwork
 
 	def clear!
 		@@events = []
+		@@handler = nil
 	end
 end
 
