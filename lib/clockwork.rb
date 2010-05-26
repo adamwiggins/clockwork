@@ -1,5 +1,7 @@
 module Clockwork
 	class Event
+		attr_accessor :job, :last
+
 		def initialize(period, job, block, options={})
 			@period = period
 			@job = job
@@ -19,9 +21,13 @@ module Clockwork
 		end
 
 		def run(t)
-			@block.call(@job)
 			@last = t
+			@block.call(@job)
 		rescue => e
+			log_error(e)
+		end
+
+		def log_error(e)
 			STDERR.puts exception_message(e)
 		end
 

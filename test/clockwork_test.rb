@@ -1,5 +1,6 @@
 require File.dirname(__FILE__) + '/../lib/clockwork'
 require 'contest'
+require 'mocha'
 
 module Clockwork
 	def log(msg)
@@ -74,5 +75,20 @@ class ClockworkTest < Test::Unit::TestCase
 		Clockwork.every(1.minute, 'myjob') { $set_me = 2 }
 		Clockwork.tick(Time.now)
 		assert_equal 2, $set_me
+	end
+
+	test "exceptions are trapped and logged" do
+		Clockwork.handler { raise 'boom' }
+		event = Clockwork.every(1.minute, 'myjob')
+		event.expects(:log_error)
+		assert_nothing_raised { Clockwork.tick(Time.now) }
+	end
+
+	test "exceptions still set the last timestamp to avoid spastic error loops" do
+		Clockwork.handler { raise 'boom' }
+		event = Clockwork.every(1.minute, 'myjob')
+		event.stubs(:log_error)
+		Clockwork.tick(t = Time.now)
+		assert_equal t, event.last
 	end
 end
