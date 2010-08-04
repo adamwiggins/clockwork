@@ -62,6 +62,12 @@ class ClockworkTest < Test::Unit::TestCase
 		end
 	end
 
+	test "aborts when fails to parse" do
+		assert_raise(Clockwork::FailedToParse) do
+			Clockwork.every(1.day, "myjob", :at => "a:bc")
+		end
+	end
+
 	test "general handler" do
 		$set_me = 0
 		Clockwork.handler { $set_me = 1 }

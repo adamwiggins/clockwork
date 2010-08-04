@@ -1,4 +1,6 @@
 module Clockwork
+	class FailedToParse < StandardError; end;
+
 	class Event
 		attr_accessor :job, :last
 
