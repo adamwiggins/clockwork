@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{clockwork}
-  s.version = "0.2.0"
+  s.version = "0.2.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Adam Wiggins"]
-  s.date = %q{2010-05-26}
+  s.date = %q{2010-08-04}
   s.default_executable = %q{clockwork}
   s.description = %q{A scheduler process to replace cron, using a more flexible Ruby syntax running as a single long-running process.  Inspired by rufus-scheduler and resque-scheduler.}
   s.email = %q{adam@heroku.com}
@@ -28,7 +28,7 @@ Gem::Specification.new do |s|
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubyforge_project = %q{clockwork}
-  s.rubygems_version = %q{1.3.6}
+  s.rubygems_version = %q{1.3.7}
   s.summary = %q{A scheduler process to replace cron.}
   s.test_files = [
     "test/clockwork_test.rb"
@@ -38,7 +38,7 @@ Gem::Specification.new do |s|
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
     s.specification_version = 3
 
-    if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
+    if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
     else
     end
   else
