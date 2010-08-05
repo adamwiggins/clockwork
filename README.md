@@ -134,6 +134,8 @@ Inspired by [rufus-scheduler](http://rufus.rubyforge.org/rufus-scheduler/) and [
 
 Design assistance from Peter van Hardenberg and Matthew Soldo
 
+Patches contributed by Mark McGranaghan
+
 Released under the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 http://github.com/adamwiggins/clockwork
