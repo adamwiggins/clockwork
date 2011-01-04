@@ -32,8 +32,8 @@ Create clock.rb:
 Run it with the clockwork binary:
 
     $ clockwork clock.rb
-    [2010-05-25 18:16:46 -0700] Starting clock for 4 events: [ frequent.job less.frequent.job hourly.job midnight.job ]
-    [2010-05-25 18:16:46 -0700] -> frequent.job
+    Starting clock for 4 events: [ frequent.job less.frequent.job hourly.job midnight.job ]
+    Triggering frequent.job
 
 Use with queueing
 -----------------
