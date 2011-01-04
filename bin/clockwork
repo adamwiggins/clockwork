@@ -2,12 +2,13 @@
 
 STDERR.sync = STDOUT.sync = true
 
-$LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
-require 'clockwork'
+require File.expand_path('../../lib/clockwork', __FILE__)
 include Clockwork
 
-usage = "clockwork <schedule.rb>"
+usage = "clockwork <clock.rb>"
 file = ARGV.shift or abort usage
+
+file = "./#{file}" unless file.match(/^[\/.]/)
 
 require file
 

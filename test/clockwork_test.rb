@@ -1,6 +1,7 @@
-require File.dirname(__FILE__) + '/../lib/clockwork'
+require File.expand_path('../../lib/clockwork', __FILE__)
 require 'contest'
 require 'mocha'
+require 'time'
 
 module Clockwork
 	def log(msg)
