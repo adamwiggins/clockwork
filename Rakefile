@@ -16,7 +16,7 @@ end
 Jeweler::GemcutterTasks.new
 
 task 'test' do
-	sh "turn"
+	sh "ruby test/clockwork_test.rb"
 end
 
 task :build => :test
