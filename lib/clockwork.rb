@@ -83,7 +83,7 @@ module Clockwork
 	end
 
 	def log(msg)
-		puts "[#{Time.now}] #{msg}"
+		puts msg
 	end
 
 	def tick(t=Time.now)
@@ -92,7 +92,7 @@ module Clockwork
 		end
 
 		to_run.each do |event|
-			log "-> #{event}"
+			log "Triggering #{event}"
 			event.run(t)
 		end
 
