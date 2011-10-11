@@ -1,6 +1,8 @@
 module Clockwork
 	class FailedToParse < StandardError; end;
 
+	@@events = []
+
 	class Event
 		attr_accessor :job, :last
 
@@ -69,7 +71,6 @@ module Clockwork
 
 	def every(period, job, options={}, &block)
 		event = Event.new(period, job, block || get_handler, options)
-		@@events ||= []
 		@@events << event
 		event
 	end
