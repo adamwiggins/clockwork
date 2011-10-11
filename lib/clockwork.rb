@@ -1,6 +1,8 @@
 module Clockwork
 	class FailedToParse < StandardError; end;
 
+	@@events = []
+
 	class Event
 		attr_accessor :job, :last
 
@@ -68,7 +70,6 @@ module Clockwork
 	end
 
 	def every(period, job, options={}, &block)
-		@@events ||= []
 		if options[:at].respond_to?(:each)
 			each_options = options.clone
 			options[:at].each do |at|
