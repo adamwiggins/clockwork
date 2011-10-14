@@ -20,7 +20,7 @@ module Clockwork
 
 		def time?(t)
 			ellapsed_ready = (@last.nil? or (t - @last).to_i >= @period)
-			time_ready = (@at.nil? or (t.hour == @at[0] and t.min == @at[1]))
+			time_ready = (@at.nil? or ((@at[0].nil? or t.hour == @at[0]) and t.min == @at[1]))
 			ellapsed_ready and time_ready
 		end
 
@@ -48,10 +48,16 @@ module Clockwork
 
 		def parse_at(at)
 			return unless at
-			m = at.match(/^(\d\d):(\d\d)$/)
+			m = at.match(/^(\d\d|\*+):(\d\d)$/)
 			raise FailedToParse, at unless m
-			hour, min = m[1].to_i, m[2].to_i
-			raise FailedToParse, at if hour >= 24 or min >= 60
+			if m[1][0] == '*'
+				hour = nil
+			else
+				hour = m[1].to_i
+				raise FailedToParse, at if hour >= 24
+			end
+			min = m[2].to_i
+			raise FailedToParse, at if min >= 60
 			[ hour, min ]
 		end
 	end
