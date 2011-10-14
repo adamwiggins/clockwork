@@ -1,3 +1,7 @@
+**This fork is no longer maintained, please see:**
+
+[https://github.com/tomykaira/clockwork](https://github.com/tomykaira/clockwork)
+
 Clockwork - a clock process to replace cron
 ===========================================
 
