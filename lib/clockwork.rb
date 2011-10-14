@@ -68,10 +68,16 @@ module Clockwork
 	end
 
 	def every(period, job, options={}, &block)
-		event = Event.new(period, job, block || get_handler, options)
 		@@events ||= []
-		@@events << event
-		event
+		if options[:at].respond_to?(:each)
+			each_options = options.clone
+			options[:at].each do |at|
+				each_options[:at] = at
+				register(period, job, block, each_options)
+			end
+		else
+			register(period, job, block, options)
+		end
 	end
 
 	def run
@@ -102,6 +108,13 @@ module Clockwork
 	def clear!
 		@@events = []
 		@@handler = nil
+	end
+
+	private
+	def register(period, job, block, options)
+		event = Event.new(period, job, block || get_handler, options)
+		@@events << event
+		event
 	end
 	
 end
