@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Adam Wiggins"]
-  s.date = %q{2011-10-14}
+  s.date = %q{2011-10-18}
   s.default_executable = %q{clockwork}
   s.description = %q{A scheduler process to replace cron, using a more flexible Ruby syntax running as a single long-running process.  Inspired by rufus-scheduler and resque-scheduler.}
   s.email = %q{adam@heroku.com}
@@ -18,6 +18,8 @@ Gem::Specification.new do |s|
     "README.md"
   ]
   s.files = [
+    "Gemfile",
+    "Gemfile.lock",
     "README.md",
     "Rakefile",
     "VERSION",
@@ -29,17 +31,24 @@ Gem::Specification.new do |s|
   s.rubyforge_project = %q{clockwork}
   s.rubygems_version = %q{1.5.0}
   s.summary = %q{A scheduler process to replace cron.}
-  s.test_files = [
-    "test/clockwork_test.rb"
-  ]
+  s.test_files = ["test/clockwork_test.rb"]
 
   if s.respond_to? :specification_version then
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
+      s.add_development_dependency(%q<jeweler>, [">= 0"])
+      s.add_development_dependency(%q<contest>, [">= 0"])
+      s.add_development_dependency(%q<mocha>, [">= 0"])
     else
+      s.add_dependency(%q<jeweler>, [">= 0"])
+      s.add_dependency(%q<contest>, [">= 0"])
+      s.add_dependency(%q<mocha>, [">= 0"])
     end
   else
+    s.add_dependency(%q<jeweler>, [">= 0"])
+    s.add_dependency(%q<contest>, [">= 0"])
+    s.add_dependency(%q<mocha>, [">= 0"])
   end
 end
 

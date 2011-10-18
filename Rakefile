@@ -11,6 +11,7 @@ Jeweler::Tasks.new do |s|
 	s.rubyforge_project = "clockwork"
 
 	s.files = FileList["[A-Z]*", "{bin,lib}/**/*"]
+	s.test_files = FileList["{test}/**/*"]
 end
 
 Jeweler::GemcutterTasks.new
