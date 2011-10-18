@@ -48,17 +48,19 @@ module Clockwork
 
 		def parse_at(at)
 			return unless at
-			m = at.match(/^(\d\d|\*+):(\d\d)$/)
-			raise FailedToParse, at unless m
-			if m[1][0] == '*'
-				hour = nil
+			case at
+			when /^(\d\d):(\d\d)$/
+				hour = $1.to_i
+				min  = $2.to_i
+				raise FailedToParse, at if hour >= 24 || min >= 60
+				[hour, min]
+			when /^\*\*:(\d\d)$/
+				min = $1.to_i
+				raise FailedToParse, at if min >= 60
+				[nil, min]
 			else
-				hour = m[1].to_i
-				raise FailedToParse, at if hour >= 24
+				raise FailedToParse, at
 			end
-			min = m[2].to_i
-			raise FailedToParse, at if min >= 60
-			[ hour, min ]
 		end
 	end
 
