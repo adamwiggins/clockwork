@@ -21,3 +21,4 @@ task 'test' do
 end
 
 task :build => :test
+task :default => :test
