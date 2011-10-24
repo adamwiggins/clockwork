@@ -16,10 +16,16 @@ class ClockworkTest < Test::Unit::TestCase
 	end
 
 	def assert_will_run(t)
+		if t.is_a? String
+			t = Time.parse(t)
+		end
 		assert_equal 1, Clockwork.tick(t).size
 	end
 
 	def assert_wont_run(t)
+		if t.is_a? String
+			t = Time.parse(t)
+		end
 		assert_equal 0, Clockwork.tick(t).size
 	end
 
@@ -50,33 +56,33 @@ class ClockworkTest < Test::Unit::TestCase
 	test "once a day at 16:20" do
 		Clockwork.every(1.day, 'myjob', :at => '16:20')
 
-		assert_wont_run Time.parse('jan 1 2010 16:19:59')
-		assert_will_run Time.parse('jan 1 2010 16:20:00')
-		assert_wont_run Time.parse('jan 1 2010 16:20:01')
-		assert_wont_run Time.parse('jan 2 2010 16:19:59')
-		assert_will_run Time.parse('jan 2 2010 16:20:00')
+		assert_wont_run 'jan 1 2010 16:19:59'
+		assert_will_run 'jan 1 2010 16:20:00'
+		assert_wont_run 'jan 1 2010 16:20:01'
+		assert_wont_run 'jan 2 2010 16:19:59'
+		assert_will_run 'jan 2 2010 16:20:00'
 	end
 
 	test "twice a day at 16:20 and 18:10" do
 		Clockwork.every(1.day, 'myjob', :at => ['16:20', '18:10'])
 
-		assert_wont_run Time.parse('jan 1 2010 16:19:59')
-		assert_will_run Time.parse('jan 1 2010 16:20:00')
-		assert_wont_run Time.parse('jan 1 2010 16:20:01')
+		assert_wont_run 'jan 1 2010 16:19:59'
+		assert_will_run 'jan 1 2010 16:20:00'
+		assert_wont_run 'jan 1 2010 16:20:01'
 
-		assert_wont_run Time.parse('jan 1 2010 18:09:59')
-		assert_will_run Time.parse('jan 1 2010 18:10:00')
-		assert_wont_run Time.parse('jan 1 2010 18:10:01')
+		assert_wont_run 'jan 1 2010 18:09:59'
+		assert_will_run 'jan 1 2010 18:10:00'
+		assert_wont_run 'jan 1 2010 18:10:01'
 	end
 
 	test "once an hour at **:20" do
 		Clockwork.every(1.hour, 'myjob', :at => '**:20')
 
-		assert_wont_run Time.parse('jan 1 2010 15:19:59')
-		assert_will_run Time.parse('jan 1 2010 15:20:00')
-		assert_wont_run Time.parse('jan 1 2010 15:20:01')
-		assert_wont_run Time.parse('jan 2 2010 16:19:59')
-		assert_will_run Time.parse('jan 2 2010 16:20:00')
+		assert_wont_run 'jan 1 2010 15:19:59'
+		assert_will_run 'jan 1 2010 15:20:00'
+		assert_wont_run 'jan 1 2010 15:20:01'
+		assert_wont_run 'jan 2 2010 16:19:59'
+		assert_will_run 'jan 2 2010 16:20:00'
 	end
 
 	test "aborts when no handler defined" do
