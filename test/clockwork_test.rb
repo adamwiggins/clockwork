@@ -63,6 +63,14 @@ class ClockworkTest < Test::Unit::TestCase
 		assert_will_run 'jan 2 2010 16:20:00'
 	end
 
+	test ":at also accepts 8:20" do
+		Clockwork.every(1.hour, 'myjob', :at => '8:20')
+
+		assert_wont_run 'jan 1 2010 08:19:59'
+		assert_will_run 'jan 1 2010 08:20:00'
+		assert_wont_run 'jan 1 2010 08:20:01'
+	end
+
 	test "twice a day at 16:20 and 18:10" do
 		Clockwork.every(1.day, 'myjob', :at => ['16:20', '18:10'])
 
@@ -83,6 +91,14 @@ class ClockworkTest < Test::Unit::TestCase
 		assert_wont_run 'jan 1 2010 15:20:01'
 		assert_wont_run 'jan 2 2010 16:19:59'
 		assert_will_run 'jan 2 2010 16:20:00'
+	end
+
+	test ":at also accepts *:20" do
+		Clockwork.every(1.hour, 'myjob', :at => '*:20')
+
+		assert_wont_run 'jan 1 2010 15:19:59'
+		assert_will_run 'jan 1 2010 15:20:00'
+		assert_wont_run 'jan 1 2010 15:20:01'
 	end
 
 	test "aborts when no handler defined" do
