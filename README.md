@@ -35,6 +35,14 @@ Run it with the clockwork binary:
     Starting clock for 4 events: [ frequent.job less.frequent.job hourly.job midnight.job ]
     Triggering frequent.job
 
+Quickstart for Heroku
+---------------------
+
+Clockwork fits well with heroku's cedar stack.
+
+Consider to use [clockwork-init.sh](https://gist.github.com/1312172) to create
+a new project for heroku.
+
 Use with queueing
 -----------------
 
