@@ -78,6 +78,31 @@ enqueue methods.  For example, with DJ/Rails:
     every(1.hour, 'feeds.refresh') { Feed.send_later(:refresh) }
     every(1.day, 'reminders.send', :at => '01:30') { Reminder.send_later(:send_reminders) }
 
+Parameters
+----------
+
+### :at
+
+`:at` parameter the hour and minute specifies when the event occur.
+
+The simplest example:
+
+    every(1.day, 'reminders.send', :at => '01:30')
+
+You can omit 0 of the hour:
+
+    every(1.day, 'reminders.send', :at => '1:30')
+
+The wildcard for hour is supported:
+
+    every(1.hour, 'reminders.send', :at => '**:30')
+
+You can set more than one timing:
+
+    every(1.hour, 'reminders.send', :at => ['12:00', '18:00'])
+    # send reminders at noon and evening
+
+
 Anatomy of a clock file
 -----------------------
 
