@@ -35,6 +35,23 @@ Run it with the clockwork binary:
     Starting clock for 4 events: [ frequent.job less.frequent.job hourly.job midnight.job ]
     Triggering frequent.job
 
+If you would not like to taint the namespace with `include Clockwork`, you can use
+it as the module (thanks to [hoverlover](https://github.com/hoverlover/clockwork/)).
+
+    require 'clockwork'
+
+    module Clockwork
+      handler do |job|
+        puts "Running #{job}"
+      end
+
+      every(10.seconds, 'frequent.job')
+      every(3.minutes, 'less.frequent.job')
+      every(1.hour, 'hourly.job')
+
+      every(1.day, 'midnight.job', :at => '00:00')
+    end
+
 Quickstart for Heroku
 ---------------------
 
