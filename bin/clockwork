@@ -3,7 +3,6 @@
 STDERR.sync = STDOUT.sync = true
 
 require File.expand_path('../../lib/clockwork', __FILE__)
-include Clockwork
 
 usage = "clockwork <clock.rb>"
 file = ARGV.shift or abort usage
@@ -17,4 +16,4 @@ trap('INT') do
 	exit
 end
 
-run
+Clockwork::run
