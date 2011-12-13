@@ -53,6 +53,14 @@ class ClockworkTest < Test::Unit::TestCase
 		assert_will_run(t+60*60)
 	end
 
+	test "once a week" do
+		Clockwork.every(1.week, 'myjob')
+
+		assert_will_run(t=Time.now)
+		assert_wont_run(t+60*60*24*6)
+		assert_will_run(t+60*60*24*7)
+	end
+
 	test "once a day at 16:20" do
 		Clockwork.every(1.day, 'myjob', :at => '16:20')
 
@@ -99,6 +107,24 @@ class ClockworkTest < Test::Unit::TestCase
 		assert_wont_run 'jan 1 2010 15:19:59'
 		assert_will_run 'jan 1 2010 15:20:00'
 		assert_wont_run 'jan 1 2010 15:20:01'
+	end
+
+	test "on every Saturday" do
+		Clockwork.every(1.week, 'myjob', :at => 'Saturday 12:00')
+
+		assert_wont_run 'jan 1 2010 12:00:00'
+		assert_will_run 'jan 2 2010 12:00:00' # Saturday
+		assert_wont_run 'jan 3 2010 12:00:00'
+		assert_wont_run 'jan 8 2010 12:00:00'
+		assert_will_run 'jan 9 2010 12:00:00'
+	end
+
+	test ":at accepts abbreviated weekday" do
+		Clockwork.every(1.week, 'myjob', :at => 'sat 12:00')
+
+		assert_wont_run 'jan 1 2010 12:00:00'
+		assert_will_run 'jan 2 2010 12:00:00' # Saturday
+		assert_wont_run 'jan 3 2010 12:00:00'
 	end
 
 	test "aborts when no handler defined" do

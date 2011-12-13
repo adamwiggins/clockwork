@@ -3,6 +3,10 @@ module Clockwork
 
 	@@events = []
 
+	WDAYS = %w[sunday monday tuesday wednesday thursday friday saturday].map do |w|
+		[w, w.capitalize, w[0...3], w[0...3].capitalize]
+	end
+
 	class Event
 		attr_accessor :job, :last
 
@@ -20,7 +24,10 @@ module Clockwork
 
 		def time?(t)
 			ellapsed_ready = (@last.nil? or (t - @last).to_i >= @period)
-			time_ready = (@at.nil? or ((@at[0].nil? or t.hour == @at[0]) and t.min == @at[1]))
+			time_ready = (@at.nil? or
+				((@at[2].nil? or t.wday == @at[2]) and
+				 (@at[0].nil? or t.hour == @at[0]) and
+				 t.min == @at[1]))
 			ellapsed_ready and time_ready
 		end
 
@@ -49,6 +56,10 @@ module Clockwork
 		def parse_at(at)
 			return unless at
 			case at
+			when /^([[:alpha:]]+)\s(.*)$/
+				wday = WDAYS.find_index {|x| x.include?($1) }
+				raise FailedToParse, at if wday == nil
+				parse_at($2) << wday
 			when /^(\d{1,2}):(\d\d)$/
 				hour = $1.to_i
 				min  = $2.to_i
@@ -141,5 +152,8 @@ unless 1.respond_to?(:seconds)
 
   	def days; self * 86400; end
   	alias :day :days
+
+  	def weeks; self * 604800; end
+  	alias :week :weeks
   end
 end
