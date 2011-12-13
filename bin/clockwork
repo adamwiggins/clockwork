@@ -12,8 +12,8 @@ file = "./#{file}" unless file.match(/^[\/.]/)
 require file
 
 trap('INT') do
-	puts "\rExiting"
-	exit
+  puts "\rExiting"
+  exit
 end
 
 Clockwork::run
