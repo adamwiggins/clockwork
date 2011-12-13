@@ -135,7 +135,7 @@ class ClockworkTest < Test::Unit::TestCase
   end
 
   test "aborts when fails to parse" do
-    assert_raise(Clockwork::FailedToParse) do
+    assert_raise(Clockwork::At::FailedToParse) do
       Clockwork.every(1.day, "myjob", :at => "a:bc")
     end
   end

@@ -1,10 +1,53 @@
 module Clockwork
-  class FailedToParse < StandardError; end;
 
   @@events = []
 
-  WDAYS = %w[sunday monday tuesday wednesday thursday friday saturday].map do |w|
-    [w, w.capitalize, w[0...3], w[0...3].capitalize]
+  class At
+    class FailedToParse < StandardError; end;
+    NOT_SPECIFIED = class << nil
+                      include Comparable
+                      def <=>(other); 0; end # equals to anything
+                    end
+    WDAYS = %w[sunday monday tuesday wednesday thursday friday saturday].map do |w|
+      [w, w.capitalize, w[0...3], w[0...3].capitalize]
+    end
+
+    def self.parse(at)
+      return unless at
+      case at
+      when /^([[:alpha:]]+)\s(.*)$/
+        ret = parse($2)
+        wday = WDAYS.find_index {|x| x.include?($1) }
+        raise FailedToParse, at if wday.nil?
+        ret.wday = wday
+        ret
+      when /^(\d{1,2}):(\d\d)$/
+        new($2.to_i, $1.to_i)
+      when /^\*{1,2}:(\d\d)$/
+        new($1.to_i)
+      else
+        raise FailedToParse, at
+      end
+    rescue ArgumentError
+      raise FailedToParse, at
+    end
+
+    attr_writer :min, :hour, :wday
+
+    def initialize(min, hour=NOT_SPECIFIED, wday=NOT_SPECIFIED)
+      if min.nil? || min < 0 || min > 59 ||
+          hour < 0 || hour > 23 ||
+          wday < 0 || wday > 6
+        raise ArgumentError
+      end
+      @min = min
+      @hour = hour
+      @wday = wday
+    end
+
+    def ready?(t)
+      t.min == @min and t.hour == @hour and t.wday == @wday
+    end
   end
 
   class Event
@@ -13,7 +56,7 @@ module Clockwork
     def initialize(period, job, block, options={})
       @period = period
       @job = job
-      @at = parse_at(options[:at])
+      @at = At.parse(options[:at])
       @last = nil
       @block = block
     end
@@ -24,11 +67,7 @@ module Clockwork
 
     def time?(t)
       ellapsed_ready = (@last.nil? or (t - @last).to_i >= @period)
-      time_ready = (@at.nil? or
-        ((@at[2].nil? or t.wday == @at[2]) and
-         (@at[0].nil? or t.hour == @at[0]) and
-         t.min == @at[1]))
-      ellapsed_ready and time_ready
+      ellapsed_ready and (@at.nil? or @at.ready?(t))
     end
 
     def run(t)
@@ -51,27 +90,6 @@ module Clockwork
       end
 
       msg.join("\n")
-    end
-
-    def parse_at(at)
-      return unless at
-      case at
-      when /^([[:alpha:]]+)\s(.*)$/
-        wday = WDAYS.find_index {|x| x.include?($1) }
-        raise FailedToParse, at if wday == nil
-        parse_at($2) << wday
-      when /^(\d{1,2}):(\d\d)$/
-        hour = $1.to_i
-        min  = $2.to_i
-        raise FailedToParse, at if hour >= 24 || min >= 60
-        [hour, min]
-      when /^\*{1,2}:(\d\d)$/
-        min = $1.to_i
-        raise FailedToParse, at if min >= 60
-        [nil, min]
-      else
-        raise FailedToParse, at
-      end
     end
   end
 
