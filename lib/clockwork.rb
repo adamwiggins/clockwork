@@ -4,10 +4,7 @@ module Clockwork
 
   class At
     class FailedToParse < StandardError; end;
-    NOT_SPECIFIED = class << nil
-                      include Comparable
-                      def <=>(other); 0; end # equals to anything
-                    end
+    NOT_SPECIFIED = nil
     WDAYS = %w[sunday monday tuesday wednesday thursday friday saturday].map do |w|
       [w, w.capitalize, w[0...3], w[0...3].capitalize]
     end
@@ -36,8 +33,8 @@ module Clockwork
 
     def initialize(min, hour=NOT_SPECIFIED, wday=NOT_SPECIFIED)
       if min.nil? || min < 0 || min > 59 ||
-          hour < 0 || hour > 23 ||
-          wday < 0 || wday > 6
+          (hour != NOT_SPECIFIED && (hour < 0 || hour > 23)) ||
+          (wday != NOT_SPECIFIED && (wday < 0 || wday > 6))
         raise ArgumentError
       end
       @min = min
@@ -46,7 +43,9 @@ module Clockwork
     end
 
     def ready?(t)
-      t.min == @min and t.hour == @hour and t.wday == @wday
+      t.min == @min and
+        (@hour == NOT_SPECIFIED or t.hour == @hour) and
+        (@wday == NOT_SPECIFIED or t.wday == @wday)
     end
   end
 
