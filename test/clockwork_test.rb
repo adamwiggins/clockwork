@@ -170,20 +170,31 @@ class ClockworkTest < Test::Unit::TestCase
     assert_equal t, event.last
   end
 
+  test "Configuration instance creation: defaults" do
+    cfg = Clockwork::Configuration.new({:sleep_timeout => 100, :logger => "A Logger"})
+    assert_equal 100, cfg.sleep_timeout
+    assert_equal "A Logger", cfg.logger
+  end
+
+  test "Configuration, overriding defaults" do
+    cfg = Clockwork::Configuration.new({:sleep_timeout => 100})
+    cfg.sleep_timeout = 200
+    assert_equal 200, cfg.sleep_timeout
+  end
+
   test "should be configurable" do
     Clockwork.configure do |config|
-      config[:sleep_timeout] = 100
-      config[:dummy] = "dummy"
+      config.sleep_timeout = 200
+      config.logger = "A Logger"
+      config.whatever = "It is supposed to illustrate that we can add arbitrary configurations"
     end
+    
 
-    underlying_var = Clockwork.send(:class_variable_get, :@@configuration)
-    assert_equal 100, underlying_var[:sleep_timeout]
-    assert_equal "dummy", underlying_var[:dummy]
+    assert Clockwork.config.is_a?(Clockwork::Configuration)
+
+    assert_equal 200, Clockwork.config.sleep_timeout
+    assert_equal "A Logger", Clockwork.config.logger
+    assert_match /^It is supposed to/, Clockwork.config.whatever
   end
 
-  test "configuration defaults" do
-    underlying_var = Clockwork.send(:class_variable_get, :@@configuration)
-    assert_equal 1, underlying_var[:sleep_timeout]
-    assert underlying_var[:logger].is_a?(Logger)
-  end
 end

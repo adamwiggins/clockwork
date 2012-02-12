@@ -3,7 +3,6 @@ require 'logger'
 module Clockwork
 
   @@events = []
-  @@configuration = { :sleep_timeout => 1, :logger => Logger.new(STDOUT) }
 
   def configure
     yield(@@configuration)
@@ -85,7 +84,7 @@ module Clockwork
 
     def log_error(e)
       STDERR.puts exception_message(e)
-      Clockwork.send(:class_variable_get, :@@configuration)[:logger].warn(e)
+      Clockwork.config.logger.error(e)
     end
 
     def exception_message(e)
@@ -98,6 +97,30 @@ module Clockwork
 
       msg.join("\n")
     end
+  end
+
+  class Configuration
+    def initialize(defaults = {})
+      @backend = defaults.clone
+    end
+    
+    def method_missing(method, *params, &block)
+      if method.to_s =~ /^(.+)=/
+        #setter method called
+        @backend[Regexp.last_match[1].to_sym] = params.first
+      else
+        #getter method called
+        @backend[method.to_sym]
+      end
+    end
+  end
+
+  @@configuration = Configuration.new(
+    { :sleep_timeout => 1, :logger => Logger.new(STDOUT) }
+  )
+   
+  def config
+    @@configuration
   end
 
   extend self
@@ -129,12 +152,12 @@ module Clockwork
     log "Starting clock for #{@@events.size} events: [ " + @@events.map { |e| e.to_s }.join(' ') + " ]"
     loop do
       tick
-      sleep @@configuration[:sleep_timeout]
+      sleep(config.sleep_timeout)
     end
   end
 
   def log(msg)
-    @@configuration[:logger].info(msg)
+    config.logger.info(msg)
   end
 
   def tick(t=Time.now)
