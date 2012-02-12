@@ -169,4 +169,21 @@ class ClockworkTest < Test::Unit::TestCase
     Clockwork.tick(t = Time.now)
     assert_equal t, event.last
   end
+
+  test "should be configurable" do
+    Clockwork.configure do |config|
+      config[:sleep_timeout] = 100
+      config[:dummy] = "dummy"
+    end
+
+    underlying_var = Clockwork.send(:class_variable_get, :@@configuration)
+    assert_equal 100, underlying_var[:sleep_timeout]
+    assert_equal "dummy", underlying_var[:dummy]
+  end
+
+  test "configuration defaults" do
+    underlying_var = Clockwork.send(:class_variable_get, :@@configuration)
+    assert_equal 1, underlying_var[:sleep_timeout]
+    assert underlying_var[:logger].is_a?(Logger)
+  end
 end

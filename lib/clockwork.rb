@@ -1,6 +1,13 @@
+require 'logger'
+
 module Clockwork
 
   @@events = []
+  @@configuration = { :sleep_timeout => 1, :logger => Logger.new(STDOUT) }
+
+  def configure
+    yield(@@configuration)
+  end
 
   class At
     class FailedToParse < StandardError; end;
@@ -78,6 +85,7 @@ module Clockwork
 
     def log_error(e)
       STDERR.puts exception_message(e)
+      Clockwork.send(:class_variable_get, :@@configuration)[:logger].warn(e)
     end
 
     def exception_message(e)
@@ -121,12 +129,12 @@ module Clockwork
     log "Starting clock for #{@@events.size} events: [ " + @@events.map { |e| e.to_s }.join(' ') + " ]"
     loop do
       tick
-      sleep 1
+      sleep @@configuration[:sleep_timeout]
     end
   end
 
   def log(msg)
-    puts msg
+    @@configuration[:logger].info(msg)
   end
 
   def tick(t=Time.now)
@@ -135,7 +143,7 @@ module Clockwork
     end
 
     to_run.each do |event|
-      log "Triggering #{event}"
+      log "Triggering '#{event}' at #{Time.now}"
       event.run(t)
     end
 
