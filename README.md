@@ -120,6 +120,29 @@ You can set more than one timing:
     # send reminders at noon and evening
 
 
+Configuration
+-----------------------
+
+Clockwork exposes a couple of configuration options you may change:
+
+### :logger
+
+By default Clockwork logs to STDOUT. In case you prefer to make it to use our
+own logger implementation you have to specify the `logger` configuration option. See example below.
+
+### :sleep_timeout
+
+Clockwork wakes up once a second (by default) and performs its duties. If that
+is the rare case you need to tweak the number of seconds it sleeps then you have
+the `sleep_timeout` configuration option to set like shown below.
+
+### Configuration example
+
+    Clockwork.configure do |config|
+      config[:sleep_timeout] = 5
+      config[:logger] = Logger.new(log_file_path)
+    end
+
 Anatomy of a clock file
 -----------------------
 
