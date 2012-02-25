@@ -1,3 +1,5 @@
+require 'logger'
+
 module Clockwork
 
   @@events = []
@@ -77,7 +79,7 @@ module Clockwork
     end
 
     def log_error(e)
-      STDERR.puts exception_message(e)
+      Clockwork.config[:logger].error(e)
     end
 
     def exception_message(e)
@@ -90,6 +92,16 @@ module Clockwork
 
       msg.join("\n")
     end
+  end
+
+  @@configuration = { :sleep_timeout => 1, :logger => Logger.new(STDOUT) }
+
+  def configure
+    yield(config)
+  end
+   
+  def config
+    @@configuration
   end
 
   extend self
@@ -121,12 +133,12 @@ module Clockwork
     log "Starting clock for #{@@events.size} events: [ " + @@events.map { |e| e.to_s }.join(' ') + " ]"
     loop do
       tick
-      sleep 1
+      sleep(config[:sleep_timeout])
     end
   end
 
   def log(msg)
-    puts msg
+    config[:logger].info(msg)
   end
 
   def tick(t=Time.now)
@@ -135,7 +147,7 @@ module Clockwork
     end
 
     to_run.each do |event|
-      log "Triggering #{event}"
+      log "Triggering '#{event}'"
       event.run(t)
     end
 

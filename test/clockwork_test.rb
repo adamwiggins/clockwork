@@ -169,4 +169,20 @@ class ClockworkTest < Test::Unit::TestCase
     Clockwork.tick(t = Time.now)
     assert_equal t, event.last
   end
+
+  test "should be configurable" do
+    Clockwork.configure do |config|
+      config[:sleep_timeout] = 200
+      config[:logger] = "A Logger"
+    end
+
+    assert_equal 200, Clockwork.config[:sleep_timeout]
+    assert_equal "A Logger", Clockwork.config[:logger]
+  end
+
+  test "configuration should have reasonable defaults" do
+    assert_equal 1, Clockwork.config[:sleep_timeout]
+    assert Clockwork.config[:logger].is_a?(Logger)
+  end
+
 end
