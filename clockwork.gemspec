@@ -39,15 +39,17 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<jeweler>, [">= 0"])
       s.add_development_dependency(%q<contest>, [">= 0"])
       s.add_development_dependency(%q<mocha>, [">= 0"])
+      s.add_development_dependency(%q<tzinfo>, [">= 0"])
     else
       s.add_dependency(%q<jeweler>, [">= 0"])
       s.add_dependency(%q<contest>, [">= 0"])
       s.add_dependency(%q<mocha>, [">= 0"])
+      s.add_dependency(%q<tzinfo>, [">= 0"])
     end
   else
     s.add_dependency(%q<jeweler>, [">= 0"])
     s.add_dependency(%q<contest>, [">= 0"])
     s.add_dependency(%q<mocha>, [">= 0"])
+    s.add_dependency(%q<tzinfo>, [">= 0"])
   end
 end
-

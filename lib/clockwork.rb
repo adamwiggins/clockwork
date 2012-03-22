@@ -1,4 +1,5 @@
 require 'logger'
+require 'tzinfo'
 
 module Clockwork
 
@@ -60,18 +61,27 @@ module Clockwork
       @at = At.parse(options[:at])
       @last = nil
       @block = block
+
+      tz = options[:tz] || Clockwork.config[:tz]
+      @timezone = TZInfo::Timezone.get(tz) if tz
     end
 
     def to_s
       @job
     end
 
+    def convert_timezone(t)
+      @timezone ? @timezone.utc_to_local(t.dup.utc) : t
+    end
+
     def time?(t)
-      ellapsed_ready = (@last.nil? or (t - @last).to_i >= @period)
-      ellapsed_ready and (@at.nil? or @at.ready?(t))
+      t = convert_timezone(t)
+      elapsed_ready = (@last.nil? or (t - @last).to_i >= @period)
+      elapsed_ready and (@at.nil? or @at.ready?(t))
     end
 
     def run(t)
+      t = convert_timezone(t)
       @last = t
       @block.call(@job)
     rescue => e
@@ -94,8 +104,6 @@ module Clockwork
     end
   end
 
-  @@configuration = { :sleep_timeout => 1, :logger => Logger.new(STDOUT) }
-
   def configure
     yield(config)
   end
@@ -105,6 +113,12 @@ module Clockwork
   end
 
   extend self
+
+  def default_configuration
+    { :sleep_timeout => 1, :logger => Logger.new(STDOUT) }
+  end
+
+  @@configuration = default_configuration
 
   def handler(&block)
     @@handler = block
@@ -157,6 +171,7 @@ module Clockwork
   def clear!
     @@events = []
     @@handler = nil
+    @@configuration = Clockwork.default_configuration
   end
 
   private
