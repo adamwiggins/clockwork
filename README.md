@@ -119,6 +119,12 @@ You can set more than one timing:
     every(1.hour, 'reminders.send', :at => ['12:00', '18:00'])
     # send reminders at noon and evening
 
+You can also specify a timezone (default is the local timezone):
+
+    every(1.day, 'reminders.send', :at => '00:00', :tz => 'UTC')
+    # Runs the job each day at midnight, UTC.
+    # The value for :tz can be anything supported by [TZInfo](http://tzinfo.rubyforge.org/)
+
 
 Configuration
 -----------------------
@@ -136,11 +142,17 @@ Clockwork wakes up once a second (by default) and performs its duties. If that
 is the rare case you need to tweak the number of seconds it sleeps then you have
 the `sleep_timeout` configuration option to set like shown below.
 
+### :tz
+
+This is the default timezone to use for all events.  When not specified this defaults to the local
+timezone.  Specifying :tz in the the parameters for an event overrides anything set here.
+
 ### Configuration example
 
     Clockwork.configure do |config|
       config[:sleep_timeout] = 5
       config[:logger] = Logger.new(log_file_path)
+      config[:tz] = 'EST'
     end
 
 Anatomy of a clock file

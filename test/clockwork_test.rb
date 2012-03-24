@@ -185,4 +185,36 @@ class ClockworkTest < Test::Unit::TestCase
     assert Clockwork.config[:logger].is_a?(Logger)
   end
 
+  test "should be able to specify a different timezone than local" do
+    Clockwork.every(1.day, 'myjob', :at => '10:00', :tz => 'UTC')
+
+    assert_wont_run 'jan 1 2010 10:00:00 EST'
+    assert_will_run 'jan 1 2010 10:00:00 UTC'
+  end
+
+  test "should be able to specify a different timezone than local for multiple times" do
+    Clockwork.every(1.day, 'myjob', :at => ['10:00', '8:00'], :tz => 'UTC')
+
+    assert_wont_run 'jan 1 2010 08:00:00 EST'
+    assert_will_run 'jan 1 2010 08:00:00 UTC'
+    assert_wont_run 'jan 1 2010 10:00:00 EST'
+    assert_will_run 'jan 1 2010 10:00:00 UTC'
+  end
+
+  test "should be able to configure a default timezone to use for all events" do
+    Clockwork.configure { |config| config[:tz] = 'UTC' }
+    Clockwork.every(1.day, 'myjob', :at => '10:00')
+
+    assert_wont_run 'jan 1 2010 10:00:00 EST'
+    assert_will_run 'jan 1 2010 10:00:00 UTC'
+  end
+
+  test "should be able to override a default timezone in an event" do
+    Clockwork.configure { |config| config[:tz] = 'UTC' }
+    Clockwork.every(1.day, 'myjob', :at => '10:00', :tz => 'EST')
+
+    assert_will_run 'jan 1 2010 10:00:00 EST'
+    assert_wont_run 'jan 1 2010 10:00:00 UTC'
+  end
+
 end
