@@ -125,6 +125,21 @@ You can also specify a timezone (default is the local timezone):
     # Runs the job each day at midnight, UTC.
     # The value for :tz can be anything supported by [TZInfo](http://tzinfo.rubyforge.org/)
 
+### :if
+
+`:if` parameter is invoked every time the task is ready to run, and run if the
+return value is true.
+
+Run on every first day of month.
+
+    Clockwork.every(1.day, 'myjob', :if => lambda { |t| t.day == 1 })
+
+The argument is an instance of `Time`.  If `:tz` option is set, it is local time.
+
+This argument cannot be omitted.  Please use _ as placeholder if not needed.
+
+    Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
+
 
 Configuration
 -----------------------
