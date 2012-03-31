@@ -4,15 +4,15 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{clockwork}
-  s.version = "0.3.4"
+  s.name = "clockwork"
+  s.version = "0.4.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = [%q{Adam Wiggins}]
-  s.date = %q{2011-12-14}
-  s.description = %q{A scheduler process to replace cron, using a more flexible Ruby syntax running as a single long-running process.  Inspired by rufus-scheduler and resque-scheduler.}
-  s.email = %q{adam@heroku.com}
-  s.executables = [%q{clockwork}]
+  s.authors = ["Adam Wiggins"]
+  s.date = "2012-03-31"
+  s.description = "A scheduler process to replace cron, using a more flexible Ruby syntax running as a single long-running process.  Inspired by rufus-scheduler and resque-scheduler."
+  s.email = "adam@heroku.com"
+  s.executables = ["clockwork"]
   s.extra_rdoc_files = [
     "README.md"
   ]
@@ -25,31 +25,32 @@ Gem::Specification.new do |s|
     "bin/clockwork",
     "lib/clockwork.rb"
   ]
-  s.homepage = %q{http://github.com/adamwiggins/clockwork}
-  s.require_paths = [%q{lib}]
-  s.rubyforge_project = %q{clockwork}
-  s.rubygems_version = %q{1.8.6}
-  s.summary = %q{A scheduler process to replace cron.}
-  s.test_files = [%q{test/clockwork_test.rb}]
+  s.homepage = "http://github.com/adamwiggins/clockwork"
+  s.require_paths = ["lib"]
+  s.rubyforge_project = "clockwork"
+  s.rubygems_version = "1.8.17"
+  s.summary = "A scheduler process to replace cron."
+  s.test_files = ["test/clockwork_test.rb"]
 
   if s.respond_to? :specification_version then
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
+      s.add_runtime_dependency(%q<tzinfo>, [">= 0"])
       s.add_development_dependency(%q<jeweler>, [">= 0"])
       s.add_development_dependency(%q<contest>, [">= 0"])
       s.add_development_dependency(%q<mocha>, [">= 0"])
-      s.add_development_dependency(%q<tzinfo>, [">= 0"])
     else
+      s.add_dependency(%q<tzinfo>, [">= 0"])
       s.add_dependency(%q<jeweler>, [">= 0"])
       s.add_dependency(%q<contest>, [">= 0"])
       s.add_dependency(%q<mocha>, [">= 0"])
-      s.add_dependency(%q<tzinfo>, [">= 0"])
     end
   else
+    s.add_dependency(%q<tzinfo>, [">= 0"])
     s.add_dependency(%q<jeweler>, [">= 0"])
     s.add_dependency(%q<contest>, [">= 0"])
     s.add_dependency(%q<mocha>, [">= 0"])
-    s.add_dependency(%q<tzinfo>, [">= 0"])
   end
 end
+
