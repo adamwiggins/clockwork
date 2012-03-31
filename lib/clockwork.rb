@@ -61,6 +61,13 @@ module Clockwork
       @at = At.parse(options[:at])
       @last = nil
       @block = block
+      if options[:if]
+        if options[:if].respond_to?(:call)
+          @if = options[:if]
+        else
+          raise ArgumentError.new(':if expects a callable object, but #{options[:if]} does not respond to call')
+        end
+      end
 
       tz = options[:tz] || Clockwork.config[:tz]
       @timezone = TZInfo::Timezone.get(tz) if tz
@@ -77,7 +84,7 @@ module Clockwork
     def time?(t)
       t = convert_timezone(t)
       elapsed_ready = (@last.nil? or (t - @last).to_i >= @period)
-      elapsed_ready and (@at.nil? or @at.ready?(t))
+      elapsed_ready and (@at.nil? or @at.ready?(t)) and (@if.nil? or @if.call(t))
     end
 
     def run(t)

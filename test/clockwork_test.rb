@@ -217,4 +217,30 @@ class ClockworkTest < Test::Unit::TestCase
     assert_wont_run 'jan 1 2010 10:00:00 UTC'
   end
 
+  test ":if true then always run" do
+    Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
+
+    assert_will_run 'jan 1 2010 16:20:00'
+  end
+
+  test ":if false then never run" do
+    Clockwork.every(1.second, 'myjob', :if => lambda { |_| false })
+
+    assert_wont_run 'jan 1 2010 16:20:00'
+  end
+
+  test ":if the first day of month" do
+    Clockwork.every(1.second, 'myjob', :if => lambda { |t| t.day == 1 })
+
+    assert_will_run 'jan 1 2010 16:20:00'
+    assert_wont_run 'jan 2 2010 16:20:00'
+    assert_will_run 'feb 1 2010 16:20:00'
+  end
+
+  test ":if is not callable then raise ArgumentError" do
+    assert_raise(ArgumentError) do
+      Clockwork.every(1.second, 'myjob', :if => true)
+    end
+  end
+
 end
