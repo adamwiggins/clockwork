@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "clockwork"
-  s.version = "0.4.0"
+  s.version = "0.4.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Adam Wiggins"]
-  s.date = "2012-03-31"
+  s.date = "2012-07-17"
   s.description = "A scheduler process to replace cron, using a more flexible Ruby syntax running as a single long-running process.  Inspired by rufus-scheduler and resque-scheduler."
   s.email = "adam@heroku.com"
   s.executables = ["clockwork"]
@@ -25,10 +25,10 @@ Gem::Specification.new do |s|
     "bin/clockwork",
     "lib/clockwork.rb"
   ]
-  s.homepage = "http://github.com/adamwiggins/clockwork"
+  s.homepage = "http://github.com/tomykaira/clockwork"
   s.require_paths = ["lib"]
   s.rubyforge_project = "clockwork"
-  s.rubygems_version = "1.8.17"
+  s.rubygems_version = "1.8.24"
   s.summary = "A scheduler process to replace cron."
   s.test_files = ["test/clockwork_test.rb"]
 
