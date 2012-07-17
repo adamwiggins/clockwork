@@ -230,7 +230,7 @@ Meta
 
 Created by Adam Wiggins
 
-Inspired by [rufus-scheduler](http://rufus.rubyforge.org/rufus-scheduler/) and [http://github.com/bvandenbos/resque-scheduler](resque-scehduler)
+Inspired by [rufus-scheduler](http://rufus.rubyforge.org/rufus-scheduler/) and [resque-scehduler](http://github.com/bvandenbos/resque-scheduler)
 
 Design assistance from Peter van Hardenberg and Matthew Soldo
 
@@ -238,5 +238,5 @@ Patches contributed by Mark McGranaghan and Lukáš Konarovský
 
 Released under the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-http://github.com/adamwiggins/clockwork
+http://github.com/tomykaira/clockwork
 
