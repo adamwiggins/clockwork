@@ -3,7 +3,6 @@
 STDERR.sync = STDOUT.sync = true
 
 require File.expand_path('../../lib/clockwork', __FILE__)
-include Clockwork
 
 usage = "clockwork <clock.rb>"
 file = ARGV.shift or abort usage
@@ -13,10 +12,9 @@ file = "./#{file}" unless file.match(/^[\/.]/)
 require file
 
 trap('INT') do
-	puts "\rExiting"
-	exit
+  puts "\rExiting"
+  exit
 end
-
 
 deamon = ARGV.shift
 
@@ -24,7 +22,7 @@ if deamon == "-d"
   begin
     require 'daemons'
   rescue LoadError
-    raise "You need to add gem 'daemons' to your Gemfile if you wish to use it."
+    raise "You need to add gem 'daemons' to your Gemfile or Rubygems if you wish to use it."
   end
   
   require 'tmpdir'
@@ -45,7 +43,7 @@ if deamon == "-d"
     opts.on("--pid-dir=DIR', 'Specifies an alternate directory in which to store the process ids.") do |dir|
       @options[:pid_dir] = dir
     end
-    opts.on('-i', '--identifier=n', 'An identifier for the process.') do |n|
+    opts.on('-i', '--identifier=str', 'An identifier for the process.') do |n|
       @options[:identifier] = n
     end
     opts.on('-l', '--log', 'Redirect both STDOUT and STDERR to a logfile named [app_name].output in the pid-file directory') do
@@ -71,9 +69,9 @@ if deamon == "-d"
   Dir.mkdir(dir) unless File.exists?(dir)
   
   Daemons.run_proc(process_name, :dir => dir, :dir_mode => :normal, :monitor => @monitor, :log_dir => @options[:log_dir], :log_output => @options[:log_output], :ARGV => @args) do |*args|
-    run
+    Clockwork::run
   end
   
 else
-  run
+  Clockwork::run
 end

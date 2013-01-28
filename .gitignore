@@ -1,2 +1,4 @@
 pkg
 tmp
+/.bundle
+Gemfile.lock
