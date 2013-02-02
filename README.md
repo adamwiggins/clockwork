@@ -69,8 +69,9 @@ makes it impossible to parallelize.  For doing the work, you should be using a
 job queueing system, such as
 [Delayed Job](http://www.therailsway.com/2009/7/22/do-it-later-with-delayed-job),
 [Beanstalk/Stalker](http://adam.heroku.com/past/2010/4/24/beanstalk_a_simple_and_fast_queueing_backend/),
-[RabbitMQ/Minion](http://adamblog.heroku.com/past/2009/9/28/background_jobs_with_rabbitmq_and_minion/), or
-[Resque](http://github.com/blog/542-introducing-resque).  This design allows a
+[RabbitMQ/Minion](http://adamblog.heroku.com/past/2009/9/28/background_jobs_with_rabbitmq_and_minion/),
+[Resque](http://github.com/blog/542-introducing-resque), or
+[Sidekiq](https://github.com/mperham/sidekiq).  This design allows a
 simple clock process with no locks, but also offers near infinite horizontal
 scalability.
 
