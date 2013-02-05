@@ -52,6 +52,13 @@ it as the module (thanks to [hoverlover](https://github.com/hoverlover/clockwork
       every(1.day, 'midnight.job', :at => '00:00')
     end
 
+If you need to load your entire environment for your jobs, simply add:
+	 
+	require './config/boot'
+	require './config/environment'
+	 
+under the `require 'clockwork'` declaration.
+
 Quickstart for Heroku
 ---------------------
 
