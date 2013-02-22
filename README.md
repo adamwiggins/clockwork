@@ -1,7 +1,3 @@
-**This fork is no longer maintained, please see:**
-
-[https://github.com/tomykaira/clockwork](https://github.com/tomykaira/clockwork)
-
 Clockwork - a clock process to replace cron
 ===========================================
 
@@ -39,6 +35,38 @@ Run it with the clockwork binary:
     Starting clock for 4 events: [ frequent.job less.frequent.job hourly.job midnight.job ]
     Triggering frequent.job
 
+If you would not like to taint the namespace with `include Clockwork`, you can use
+it as the module (thanks to [hoverlover](https://github.com/hoverlover/clockwork/)).
+
+    require 'clockwork'
+
+    module Clockwork
+      handler do |job|
+        puts "Running #{job}"
+      end
+
+      every(10.seconds, 'frequent.job')
+      every(3.minutes, 'less.frequent.job')
+      every(1.hour, 'hourly.job')
+
+      every(1.day, 'midnight.job', :at => '00:00')
+    end
+
+If you need to load your entire environment for your jobs, simply add:
+	 
+	require './config/boot'
+	require './config/environment'
+	 
+under the `require 'clockwork'` declaration.
+
+Quickstart for Heroku
+---------------------
+
+Clockwork fits well with heroku's cedar stack.
+
+Consider to use [clockwork-init.sh](https://gist.github.com/1312172) to create
+a new project for heroku.
+
 Use with queueing
 -----------------
 
@@ -48,8 +76,9 @@ makes it impossible to parallelize.  For doing the work, you should be using a
 job queueing system, such as
 [Delayed Job](http://www.therailsway.com/2009/7/22/do-it-later-with-delayed-job),
 [Beanstalk/Stalker](http://adam.heroku.com/past/2010/4/24/beanstalk_a_simple_and_fast_queueing_backend/),
-[RabbitMQ/Minion](http://adamblog.heroku.com/past/2009/9/28/background_jobs_with_rabbitmq_and_minion/), or
-[Resque](http://github.com/blog/542-introducing-resque).  This design allows a
+[RabbitMQ/Minion](http://adamblog.heroku.com/past/2009/9/28/background_jobs_with_rabbitmq_and_minion/),
+[Resque](http://github.com/blog/542-introducing-resque), or
+[Sidekiq](https://github.com/mperham/sidekiq).  This design allows a
 simple clock process with no locks, but also offers near infinite horizontal
 scalability.
 
@@ -73,6 +102,81 @@ enqueue methods.  For example, with DJ/Rails:
 
     every(1.hour, 'feeds.refresh') { Feed.send_later(:refresh) }
     every(1.day, 'reminders.send', :at => '01:30') { Reminder.send_later(:send_reminders) }
+
+Parameters
+----------
+
+### :at
+
+`:at` parameter the hour and minute specifies when the event occur.
+
+The simplest example:
+
+    every(1.day, 'reminders.send', :at => '01:30')
+
+You can omit 0 of the hour:
+
+    every(1.day, 'reminders.send', :at => '1:30')
+
+The wildcard for hour is supported:
+
+    every(1.hour, 'reminders.send', :at => '**:30')
+
+You can set more than one timing:
+
+    every(1.hour, 'reminders.send', :at => ['12:00', '18:00'])
+    # send reminders at noon and evening
+
+You can also specify a timezone (default is the local timezone):
+
+    every(1.day, 'reminders.send', :at => '00:00', :tz => 'UTC')
+    # Runs the job each day at midnight, UTC.
+    # The value for :tz can be anything supported by [TZInfo](http://tzinfo.rubyforge.org/)
+
+### :if
+
+`:if` parameter is invoked every time the task is ready to run, and run if the
+return value is true.
+
+Run on every first day of month.
+
+    Clockwork.every(1.day, 'myjob', :if => lambda { |t| t.day == 1 })
+
+The argument is an instance of `Time`.  If `:tz` option is set, it is local time.
+
+This argument cannot be omitted.  Please use _ as placeholder if not needed.
+
+    Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
+
+
+Configuration
+-----------------------
+
+Clockwork exposes a couple of configuration options you may change:
+
+### :logger
+
+By default Clockwork logs to STDOUT. In case you prefer to make it to use our
+own logger implementation you have to specify the `logger` configuration option. See example below.
+
+### :sleep_timeout
+
+Clockwork wakes up once a second (by default) and performs its duties. If that
+is the rare case you need to tweak the number of seconds it sleeps then you have
+the `sleep_timeout` configuration option to set like shown below.
+
+### :tz
+
+This is the default timezone to use for all events.  When not specified this defaults to the local
+timezone.  Specifying :tz in the the parameters for an event overrides anything set here.
+
+### Configuration example
+
+    Clockwork.configure do |config|
+      config[:sleep_timeout] = 5
+      config[:logger] = Logger.new(log_file_path)
+      config[:tz] = 'EST'
+    end
 
 Anatomy of a clock file
 -----------------------
@@ -129,12 +233,53 @@ topography:
 You should use Monit, God, Upstart, or Inittab to keep your clock process
 running the same way you keep your web and workers running.
 
+Daemonization
+-------------
+
+@mamccr posted the following example to use this with [daemons gem](https://github.com/ghazel/daemons) and `rc.d` script.
+
+`clockwork_control.rb`
+
+    require 'daemons'
+    require 'clockwork'
+    
+    clock_path = File.join(File.expand_path(File.dirname(__FILE__)), 'clock.rb')
+    
+    Daemons.run_proc('clockwork') do
+      STDERR.sync = STDOUT.sync = true
+      require clock_path
+    
+      trap('INT') do
+        puts "\rExiting"
+        exit
+      end
+    
+      Clockwork::run
+    end
+
+`clock.rb`
+    
+    require 'clockwork'
+    include Clockwork
+
+    # anything as you lie
+
+Put them in the same directory, and start a daemon with
+
+    ruby clockwork_control.rb start
+
+When using with `rc.d`, prepare a script like this.
+
+    cd YOUR_PROJECT_DIRECTORY && export PATH=$PATH:/usr/local/bin && ruby clockwork_control.rb ${1}
+
+@mamccr's original example is for Rails(tomykaira/clockwork/#14).
+
 Meta
 ----
 
 Created by Adam Wiggins
 
-Inspired by [rufus-scheduler](http://rufus.rubyforge.org/rufus-scheduler/) and [http://github.com/bvandenbos/resque-scheduler](resque-scehduler)
+Inspired by [rufus-scheduler](http://rufus.rubyforge.org/rufus-scheduler/) and [resque-scehduler](http://github.com/bvandenbos/resque-scheduler)
 
 Design assistance from Peter van Hardenberg and Matthew Soldo
 
@@ -142,5 +287,5 @@ Patches contributed by Mark McGranaghan and Lukáš Konarovský
 
 Released under the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-http://github.com/adamwiggins/clockwork
+http://github.com/tomykaira/clockwork
 
