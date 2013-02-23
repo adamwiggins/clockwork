@@ -1,6 +1,5 @@
 require 'logger'
 require 'tzinfo'
-require File.expand_path('../version', __FILE__)
 
 module Clockwork
 

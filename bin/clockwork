@@ -38,7 +38,7 @@ str
   opts.on('-i', '--identifier=str', 'An identifier for the process.') do |n|
     @options[:identifier] = n
   end
-  opts.on('-l', '--log', 'Redirect both STDOUT and STDERR to a logfile named clockwork[.identifier].output in the pid-file directory.') do
+  opts.on('-l', '--log', 'Redirect both STDOUT and STDERR to a logfile named clockwork[.<identifier>].output in the pid-file directory.') do
     @options[:log_output] = true
   end
   opts.on('--log-dir', 'A specific directory to put the log files into (default location is pid directory).') do | log_dir|
@@ -49,10 +49,6 @@ str
   end
   opts.on('-f', '--file=<clock.rb>', "Clock file (only required when run with 'start').") do |clock_file|
     @file = clock_file
-  end
-  opts.on_tail("-v","--version") do 
-    puts "Clockwork #{Clockwork::VERSION}"
-    exit
   end
 end
 
