@@ -16,6 +16,7 @@ end
   :quiet => true,
   :pid_dir => "#{Dir.tmpdir}",
   :log_output => false,
+  :monitor=>false
 }
 
 opts = OptionParser.new do |opts|
@@ -38,18 +39,27 @@ opts = OptionParser.new do |opts|
     @options[:log_dir] = log_dir
   end
   opts.on('-m', '--monitor', 'Start monitor process.') do
-    @monitor = true
+    @options[:monitor] = true
   end
-  opts.on('-c', '--clock=FILE',String,"Clock .rb file.") do |clock_file|
+  opts.on('-c', '--clock=FILE',"Clock .rb file. REQUIRED.") do |clock_file|
     @options[:file] = clock_file
+    @options[:file] = "./#{@options[:file]}" unless @options[:file].match(/^[\/.]/)
+    @options[:file] = File.expand_path(@options[:file])
   end
 end
 
 @args = opts.parse!(ARGV)
 
-if @options[:file]
-  @options[:file] = "./#{@options[:file]}" unless @options[:file].match(/^[\/.]/)
-  require @options[:file]
+unless @options[:file]
+  puts "ERROR: --clock=FILE is required"
+  puts opts
+  exit
+end
+
+unless File.exists?(@options[:file])
+  puts "ERROR: The file you specified in --clock does not exists"
+  puts opts
+  exit
 end
 
 if @options[:identifier]  
@@ -61,6 +71,8 @@ end
 dir = @options[:pid_dir]
 Dir.mkdir(dir) unless File.exists?(dir)
 
-Daemons.run_proc(process_name, :dir => dir, :dir_mode => :normal, :monitor => @monitor, :log_dir => @options[:log_dir], :log_output => @options[:log_output], :ARGV => @args) do |*args|
+Daemons.run_proc(process_name, :dir => dir, :dir_mode => :normal, :monitor => @options[:monitor], :log_dir => @options[:log_dir], :log_output => @options[:log_output], :ARGV => @args) do |*args|
+  require @options[:file]
+  
   Clockwork::run
 end
