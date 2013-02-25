@@ -3,7 +3,6 @@
 STDERR.sync = STDOUT.sync = true
 
 require File.expand_path('../../lib/clockwork', __FILE__)
-require 'tmpdir'
 require 'optparse'
 
 begin
@@ -13,26 +12,29 @@ rescue LoadError
 end
 
 @options = {
-  :quiet => true,
-  :pid_dir => "#{Dir.tmpdir}",
+  :quiet => false,
+  :pid_dir => File.expand_path("./tmp"),
   :log_output => false,
-  :monitor=>false
+  :monitor => false,
+  :file => File.expand_path("./clock.rb")
 }
 
+bin_basename = File.basename($0)
+
 opts = OptionParser.new do |opts|
-  opts.banner = "Usage: #{File.basename($0)} -c FILE [options] start|stop|restart|run"
+  opts.banner = "Usage: #{bin_basename} -c FILE [options] start|stop|restart|run"
   opts.separator ''
   opts.on_tail('-h', '--help', 'Show this message') do
     puts opts
     exit 1
   end
-  opts.on("--pid-dir=DIR", "Alternate directory in which to store the process ids.") do |dir|
+  opts.on("--pid-dir=DIR", "Alternate directory in which to store the process ids. Default is #{@options[:pid_dir]}.") do |dir|
     @options[:pid_dir] = dir
   end
-  opts.on('-i', '--identifier=STR', 'An identifier for the process.') do |n|
+  opts.on('-i', '--identifier=STR', 'An identifier for the process. Default is clock file name.') do |n|
     @options[:identifier] = n
   end
-  opts.on('-l', '--log', 'Redirect both STDOUT and STDERR to a logfile named clockwork[.<identifier>].output in the pid-file directory.') do
+  opts.on('-l', '--log', "Redirect both STDOUT and STDERR to a logfile named #{bin_basename}[.<identifier>].output in the pid-file directory.") do
     @options[:log_output] = true
   end
   opts.on('--log-dir=DIR', 'A specific directory to put the log files into (default location is pid directory).') do | log_dir|
@@ -41,7 +43,7 @@ opts = OptionParser.new do |opts|
   opts.on('-m', '--monitor', 'Start monitor process.') do
     @options[:monitor] = true
   end
-  opts.on('-c', '--clock=FILE',"Clock .rb file. REQUIRED.") do |clock_file|
+  opts.on('-c', '--clock=FILE',"Clock .rb file. Default is #{@options[:file]}.") do |clock_file|
     @options[:file] = clock_file
     @options[:file] = "./#{@options[:file]}" unless @options[:file].match(/^[\/.]/)
     @options[:file] = File.expand_path(@options[:file])
@@ -50,28 +52,30 @@ end
 
 @args = opts.parse!(ARGV)
 
-unless @options[:file]
-  puts "ERROR: --clock=FILE is required"
+def optparser_abort(opts,message)
+  $stderr.puts message
   puts opts
-  exit
+  exit 1
 end
 
-unless File.exists?(@options[:file])
-  puts "ERROR: The file you specified in --clock does not exists"
-  puts opts
-  exit
-end
+optparser_abort opts, "ERROR: --clock=FILE is required." unless @options[:file]
+optparser_abort opts, "ERROR: clock file #{@options[:file]} does not exist." unless File.exists?(@options[:file])
+optparser_abort opts, "ERROR: File extension specified in --clock must be '.rb'" unless File.extname(@options[:file]) == ".rb"
 
-if @options[:identifier]  
-  process_name = "clockwork.#{@options[:identifier]}"
+@options[:identifier]  ||= "#{File.basename(@options[:file],'.*')}"
+process_name = "#{bin_basename}.#{@options[:identifier]}"
+
+Dir.mkdir(@options[:pid_dir]) unless File.exists?(@options[:pid_dir])
+
+puts "#{process_name}: pid file: #{File.expand_path(File.join(@options[:pid_dir],process_name + '.pid'))}"
+ 
+if @options[:log_output]
+  puts "#{process_name}: output log file: #{File.expand_path(File.join(@options[:pid_dir],process_name + '.output'))}"
 else
-  process_name = "clockwork"
+  puts "#{process_name}: No output will be printed out (run with --log if needed)"
 end
 
-dir = @options[:pid_dir]
-Dir.mkdir(dir) unless File.exists?(dir)
-
-Daemons.run_proc(process_name, :dir => dir, :dir_mode => :normal, :monitor => @options[:monitor], :log_dir => @options[:log_dir], :log_output => @options[:log_output], :ARGV => @args) do |*args|
+Daemons.run_proc(process_name, :dir => @options[:pid_dir], :dir_mode => :normal, :monitor => @options[:monitor], :log_dir => @options[:log_dir], :log_output => @options[:log_output], :ARGV => @args) do |*args|
   require @options[:file]
   
   Clockwork::run
