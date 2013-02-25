@@ -38,7 +38,7 @@ opts = OptionParser.new do |opts|
     @options[:log_output] = true
   end
   opts.on('--log-dir=DIR', 'A specific directory to put the log files into (default location is pid directory).') do | log_dir|
-    @options[:log_dir] = log_dir
+    @options[:log_dir] = File.expand_path(log_dir)
   end
   opts.on('-m', '--monitor', 'Start monitor process.') do
     @options[:monitor] = true
@@ -65,12 +65,15 @@ optparser_abort opts, "ERROR: File extension specified in --clock must be '.rb'"
 @options[:identifier]  ||= "#{File.basename(@options[:file],'.*')}"
 process_name = "#{bin_basename}.#{@options[:identifier]}"
 
+@options[:log_dir] ||= @options[:pid_dir]
+
 Dir.mkdir(@options[:pid_dir]) unless File.exists?(@options[:pid_dir])
+Dir.mkdir(@options[:log_dir]) unless File.exists?(@options[:log_dir])
 
 puts "#{process_name}: pid file: #{File.expand_path(File.join(@options[:pid_dir],process_name + '.pid'))}"
  
 if @options[:log_output]
-  puts "#{process_name}: output log file: #{File.expand_path(File.join(@options[:pid_dir],process_name + '.output'))}"
+  puts "#{process_name}: output log file: #{File.expand_path(File.join(@options[:log_dir],process_name + '.output'))}"
 else
   puts "#{process_name}: No output will be printed out (run with --log if needed)"
 end
