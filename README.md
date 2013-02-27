@@ -53,10 +53,10 @@ it as the module (thanks to [hoverlover](https://github.com/hoverlover/clockwork
     end
 
 If you need to load your entire environment for your jobs, simply add:
-	 
-	require './config/boot'
-	require './config/environment'
-	 
+
+    require './config/boot'
+		require './config/environment'
+
 under the `require 'clockwork'` declaration.
 
 Quickstart for Heroku
@@ -242,23 +242,23 @@ Daemonization
 
     require 'daemons'
     require 'clockwork'
-    
+
     clock_path = File.join(File.expand_path(File.dirname(__FILE__)), 'clock.rb')
-    
+
     Daemons.run_proc('clockwork') do
       STDERR.sync = STDOUT.sync = true
       require clock_path
-    
+
       trap('INT') do
         puts "\rExiting"
         exit
       end
-    
+
       Clockwork::run
     end
 
 `clock.rb`
-    
+
     require 'clockwork'
     include Clockwork
 
@@ -288,4 +288,3 @@ Patches contributed by Mark McGranaghan and Lukáš Konarovský
 Released under the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 http://github.com/tomykaira/clockwork
-

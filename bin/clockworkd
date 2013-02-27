@@ -71,7 +71,7 @@ Dir.mkdir(@options[:pid_dir]) unless File.exists?(@options[:pid_dir])
 Dir.mkdir(@options[:log_dir]) unless File.exists?(@options[:log_dir])
 
 puts "#{process_name}: pid file: #{File.expand_path(File.join(@options[:pid_dir],process_name + '.pid'))}"
- 
+
 if @options[:log_output]
   puts "#{process_name}: output log file: #{File.expand_path(File.join(@options[:log_dir],process_name + '.output'))}"
 else
@@ -80,6 +80,6 @@ end
 
 Daemons.run_proc(process_name, :dir => @options[:pid_dir], :dir_mode => :normal, :monitor => @options[:monitor], :log_dir => @options[:log_dir], :log_output => @options[:log_output], :ARGV => @args) do |*args|
   require @options[:file]
-  
+
   Clockwork::run
 end
