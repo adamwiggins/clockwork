@@ -236,43 +236,15 @@ running the same way you keep your web and workers running.
 Daemonization
 -------------
 
-@mamccr posted the following example to use this with [daemons gem](https://github.com/ghazel/daemons) and `rc.d` script.
+Thanks to @fddayan, `clockworkd` executes clockwork script in as a daemon.
 
-`clockwork_control.rb`
+You need `daemons` gem to use `clockworkd`.  It is not automatically installed, please install by yourself.
 
-    require 'daemons'
-    require 'clockwork'
+Then,
 
-    clock_path = File.join(File.expand_path(File.dirname(__FILE__)), 'clock.rb')
+    clockworkd -c YOUR_CLOCK.rb start
 
-    Daemons.run_proc('clockwork') do
-      STDERR.sync = STDOUT.sync = true
-      require clock_path
-
-      trap('INT') do
-        puts "\rExiting"
-        exit
-      end
-
-      Clockwork::run
-    end
-
-`clock.rb`
-
-    require 'clockwork'
-    include Clockwork
-
-    # anything as you lie
-
-Put them in the same directory, and start a daemon with
-
-    ruby clockwork_control.rb start
-
-When using with `rc.d`, prepare a script like this.
-
-    cd YOUR_PROJECT_DIRECTORY && export PATH=$PATH:/usr/local/bin && ruby clockwork_control.rb ${1}
-
-@mamccr's original example is for Rails(tomykaira/clockwork/#14).
+For more details, see help shown by `clockworkd`.
 
 Meta
 ----

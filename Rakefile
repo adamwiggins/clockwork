@@ -7,7 +7,7 @@ Jeweler::Tasks.new do |s|
   s.author = "Adam Wiggins"
   s.email = "adam@heroku.com"
   s.homepage = "http://github.com/tomykaira/clockwork"
-  s.executables = [ "clockwork" ]
+  s.executables = [ "clockwork", "clockworkd" ]
   s.rubyforge_project = "clockwork"
 
   s.files = FileList["[A-Z]*", "{bin,lib}/**/*"]
