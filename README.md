@@ -251,7 +251,7 @@ Meta
 
 Created by Adam Wiggins
 
-Inspired by [rufus-scheduler](http://rufus.rubyforge.org/rufus-scheduler/) and [resque-scehduler](http://github.com/bvandenbos/resque-scheduler)
+Inspired by [rufus-scheduler](http://rufus.rubyforge.org/rufus-scheduler/) and [resque-scheduler](http://github.com/bvandenbos/resque-scheduler)
 
 Design assistance from Peter van Hardenberg and Matthew Soldo
 
