@@ -1,7 +1,7 @@
 require File.expand_path('../../lib/clockwork', __FILE__)
 require 'rubygems'
 require 'contest'
-require 'mocha'
+require 'mocha/setup'
 require 'time'
 
 module Clockwork
