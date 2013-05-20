@@ -13,6 +13,13 @@ class ClockworkTest < Test::Unit::TestCase
   setup do
     Clockwork.clear!
     Clockwork.handler { }
+    join_threads
+  end
+
+  def join_threads
+    Thread.list.each do |thread|
+      thread.join unless thread == Thread.main
+    end
   end
 
   def assert_will_run(t)
@@ -145,6 +152,7 @@ class ClockworkTest < Test::Unit::TestCase
     Clockwork.handler { $set_me = 1 }
     Clockwork.every(1.minute, 'myjob')
     Clockwork.tick(Time.now)
+    join_threads
     assert_equal 1, $set_me
   end
 
@@ -152,6 +160,8 @@ class ClockworkTest < Test::Unit::TestCase
     $set_me = 0
     Clockwork.every(1.minute, 'myjob') { $set_me = 2 }
     Clockwork.tick(Time.now)
+    join_threads
+
     assert_equal 2, $set_me
   end
 
@@ -159,7 +169,11 @@ class ClockworkTest < Test::Unit::TestCase
     Clockwork.handler { raise 'boom' }
     event = Clockwork.every(1.minute, 'myjob')
     event.expects(:log_error)
-    assert_nothing_raised { Clockwork.tick(Time.now) }
+
+    assert_nothing_raised do
+      Clockwork.tick(Time.now)
+      join_threads
+    end
   end
 
   test "exceptions still set the last timestamp to avoid spastic error loops" do
@@ -167,6 +181,7 @@ class ClockworkTest < Test::Unit::TestCase
     event = Clockwork.every(1.minute, 'myjob')
     event.stubs(:log_error)
     Clockwork.tick(t = Time.now)
+    join_threads
     assert_equal t, event.last
   end
 
@@ -174,15 +189,18 @@ class ClockworkTest < Test::Unit::TestCase
     Clockwork.configure do |config|
       config[:sleep_timeout] = 200
       config[:logger] = "A Logger"
+      config[:max_threads] = 10
     end
 
     assert_equal 200, Clockwork.config[:sleep_timeout]
     assert_equal "A Logger", Clockwork.config[:logger]
+    assert_equal 10, Clockwork.config[:max_threads]
   end
 
   test "configuration should have reasonable defaults" do
     assert_equal 1, Clockwork.config[:sleep_timeout]
     assert Clockwork.config[:logger].is_a?(Logger)
+    assert_equal 10, Clockwork.config[:max_threads]
   end
 
   test "should be able to specify a different timezone than local" do
@@ -241,6 +259,17 @@ class ClockworkTest < Test::Unit::TestCase
     assert_raise(ArgumentError) do
       Clockwork.every(1.second, 'myjob', :if => true)
     end
+  end
+
+  test "should warn about missing jobs upon exhausting threads" do
+    Clockwork.configure do |config|
+      config[:max_threads] = 0
+    end
+
+    event = Clockwork.every(1.minute, 'myjob')
+    event.expects(:log_error).with("Threads exhausted; skipping #{event}")
+
+    Clockwork.tick(Time.now)
   end
 
 end

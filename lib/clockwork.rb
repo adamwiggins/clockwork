@@ -87,12 +87,25 @@ module Clockwork
       elapsed_ready and (@at.nil? or @at.ready?(t)) and (@if.nil? or @if.call(t))
     end
 
+    def thread_available?
+      Thread.list.count < Clockwork.config[:max_threads]
+    end
+
     def run(t)
       t = convert_timezone(t)
       @last = t
-      @block.call(@job)
-    rescue => e
-      log_error(e)
+
+      if thread_available?
+        Thread.new do
+          begin
+            @block.call(@job)
+          rescue => e
+            log_error e
+          end
+        end
+      else
+        log_error "Threads exhausted; skipping #{self}"
+      end
     end
 
     def log_error(e)
@@ -122,7 +135,7 @@ module Clockwork
   extend self
 
   def default_configuration
-    { :sleep_timeout => 1, :logger => Logger.new(STDOUT) }
+    { :sleep_timeout => 1, :logger => Logger.new(STDOUT), max_threads: 10 }
   end
 
   @@configuration = default_configuration
