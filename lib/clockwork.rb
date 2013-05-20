@@ -135,7 +135,7 @@ module Clockwork
   extend self
 
   def default_configuration
-    { :sleep_timeout => 1, :logger => Logger.new(STDOUT), max_threads: 10 }
+    { :sleep_timeout => 1, :logger => Logger.new(STDOUT), :max_threads => 10 }
   end
 
   @@configuration = default_configuration
