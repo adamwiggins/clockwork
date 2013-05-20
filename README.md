@@ -149,6 +149,12 @@ This argument cannot be omitted.  Please use _ as placeholder if not needed.
     Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
 
 
+### :thread
+
+A handler with `:thread` parameter runs in a different thread.
+
+If a job is long running or IO-intensive, this option will be useful to keep the clock precise.
+
 Configuration
 -----------------------
 
