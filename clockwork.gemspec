@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "clockwork"
-  s.version = "0.5.0"
+  s.version = "0.5.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Adam Wiggins"]
-  s.date = "2013-02-27"
+  s.date = "2013-05-20"
   s.description = "A scheduler process to replace cron, using a more flexible Ruby syntax running as a single long-running process.  Inspired by rufus-scheduler and resque-scheduler."
   s.email = "adam@heroku.com"
   s.executables = ["clockwork", "clockworkd"]
