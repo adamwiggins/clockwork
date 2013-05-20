@@ -69,6 +69,10 @@ module Clockwork
         end
       end
 
+      if options[:thread]
+        @thread = options[:thread]
+      end
+
       tz = options[:tz] || Clockwork.config[:tz]
       @timezone = TZInfo::Timezone.get(tz) if tz
     end
@@ -87,12 +91,33 @@ module Clockwork
       elapsed_ready and (@at.nil? or @at.ready?(t)) and (@if.nil? or @if.call(t))
     end
 
+    def thread?
+      @thread
+    end
+
+    def thread_available?
+      Thread.list.count < Clockwork.config[:max_threads]
+    end
+
     def run(t)
       t = convert_timezone(t)
       @last = t
+
+      if thread?
+        if thread_available?
+          Thread.new { execute }
+        else
+          log_error "Threads exhausted; skipping #{self}"
+        end
+      else
+        execute
+      end
+    end
+
+    def execute
       @block.call(@job)
     rescue => e
-      log_error(e)
+      log_error e
     end
 
     def log_error(e)
@@ -122,7 +147,7 @@ module Clockwork
   extend self
 
   def default_configuration
-    { :sleep_timeout => 1, :logger => Logger.new(STDOUT) }
+    { :sleep_timeout => 1, :logger => Logger.new(STDOUT), :max_threads => 10 }
   end
 
   @@configuration = default_configuration

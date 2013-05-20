@@ -170,12 +170,18 @@ the `sleep_timeout` configuration option to set like shown below.
 This is the default timezone to use for all events.  When not specified this defaults to the local
 timezone.  Specifying :tz in the the parameters for an event overrides anything set here.
 
+### :max_threads
+
+Clockwork runs handlers in threads. If it exceeds `max_threads`, it will warn you about missing
+jobs.
+
 ### Configuration example
 
     Clockwork.configure do |config|
       config[:sleep_timeout] = 5
       config[:logger] = Logger.new(log_file_path)
       config[:tz] = 'EST'
+      config[:max_threads] = 15
     end
 
 Anatomy of a clock file
