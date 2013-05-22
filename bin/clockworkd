@@ -2,7 +2,7 @@
 
 STDERR.sync = STDOUT.sync = true
 
-require File.expand_path('../../lib/clockwork', __FILE__)
+require 'clockwork'
 require 'optparse'
 
 begin
