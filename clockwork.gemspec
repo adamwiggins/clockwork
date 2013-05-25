@@ -54,6 +54,7 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<contest>, [">= 0"])
     s.add_dependency(%q<daemons>, [">= 0"])
     s.add_dependency(%q<mocha>, [">= 0"])
+    s.add_dependency(%q<activesupport>, [">= 0"])
   end
 end
 

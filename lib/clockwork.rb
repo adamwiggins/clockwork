@@ -1,5 +1,6 @@
 require 'logger'
 require 'tzinfo'
+require 'active_support/time'
 
 module Clockwork
 
@@ -82,7 +83,7 @@ module Clockwork
     end
 
     def convert_timezone(t)
-      @timezone ? @timezone.utc_to_local(t.dup.utc) : t
+      @timezone ? t.in_time_zone(@timezone) : t
     end
 
     def time?(t)

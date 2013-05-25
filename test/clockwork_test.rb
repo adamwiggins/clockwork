@@ -3,6 +3,7 @@ require 'rubygems'
 require 'contest'
 require 'mocha/setup'
 require 'time'
+require 'active_support/time'
 
 module Clockwork
   def log(msg)
@@ -242,6 +243,15 @@ class ClockworkTest < Test::Unit::TestCase
     assert_will_run 'jan 1 2010 16:20:00'
     assert_wont_run 'jan 2 2010 16:20:00'
     assert_will_run 'feb 1 2010 16:20:00'
+  end
+
+  test ":if it is compared to a time with zone" do
+    tz = "America/Chicago"
+    time = Time.utc(2012,5,25,10,00)
+    Clockwork.every(1.second, 'myjob', tz: tz, :if => lambda  { |t|(
+      ((time - 1.hour)..(time + 1.hour)).cover? t
+    )})
+    assert_will_run time
   end
 
   test ":if is not callable then raise ArgumentError" do
