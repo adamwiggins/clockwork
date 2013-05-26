@@ -147,7 +147,7 @@ Run on every first day of month.
 
     Clockwork.every(1.day, 'myjob', :if => lambda { |t| t.day == 1 })
 
-The argument is an instance of `Time`.  If `:tz` option is set, it is local time.
+The argument is an instance of `ActiveSupport::TimeWithZone` if the `:tz` option is set. Otherwise, it's an instance of `Time`.
 
 This argument cannot be omitted.  Please use _ as placeholder if not needed.
 
