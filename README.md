@@ -41,6 +41,11 @@ it as the module (thanks to [hoverlover](https://github.com/hoverlover/clockwork
     require 'clockwork'
 
     module Clockwork
+
+      configure do |cofig|
+        config[:tz] = "America/Chicago"
+      end
+
       handler do |job|
         puts "Running #{job}"
       end
