@@ -1,5 +1,4 @@
 require 'logger'
-require 'tzinfo'
 require 'active_support/time'
 
 module Clockwork
@@ -74,8 +73,7 @@ module Clockwork
         @thread = options[:thread]
       end
 
-      tz = options[:tz] || Clockwork.config[:tz]
-      @timezone = TZInfo::Timezone.get(tz) if tz
+      @timezone = options[:tz] || Clockwork.config[:tz]
     end
 
     def to_s
@@ -140,7 +138,7 @@ module Clockwork
   def configure
     yield(config)
   end
-   
+
   def config
     @@configuration
   end
