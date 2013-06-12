@@ -42,7 +42,7 @@ it as the module (thanks to [hoverlover](https://github.com/hoverlover/clockwork
 
     module Clockwork
 
-      configure do |cofig|
+      configure do |config|
         config[:tz] = "America/Chicago"
       end
 
