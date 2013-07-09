@@ -2,9 +2,9 @@ Gem::Specification.new do |s|
   s.name = "clockwork"
   s.version = "0.5.2"
 
-  s.authors = ["Adam Wiggins"]
+  s.authors = ["Adam Wiggins", "tomykaira"]
   s.description = "A scheduler process to replace cron, using a more flexible Ruby syntax running as a single long-running process.  Inspired by rufus-scheduler and resque-scheduler."
-  s.email = "adam@heroku.com"
+  s.email = ["adam@heroku.com", "tomykaira@gmail.com"]
   s.extra_rdoc_files = [
     "README.md"
   ]
