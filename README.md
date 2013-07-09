@@ -1,4 +1,4 @@
-Clockwork - a clock process to replace cron [![Build Status](https://secure.travis-ci.org/tomykaira/clockwork.png?branch=master)](http://travis-ci.org/tomykaira/clockwork)
+Clockwork - a clock process to replace cron [![Build Status](https://secure.travis-ci.org/tomykaira/clockwork.png?branch=master)](http://travis-ci.org/tomykaira/clockwork) [![Dependency Status](https://gemnasium.com/tomykaira/clockwork.png)](https://gemnasium.com/tomykaira/clockwork)
 ===========================================
 
 Cron is non-ideal for running scheduled application tasks, especially in an app
