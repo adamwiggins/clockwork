@@ -246,7 +246,7 @@ class ClockworkTest < Test::Unit::TestCase
   end
 
   test ":if it is compared to a time with zone" do
-    tz = "America/Chicago"
+    tz = 'America/Chicago'
     time = Time.utc(2012,5,25,10,00)
     Clockwork.every(1.second, 'myjob', tz: tz, :if => lambda  { |t|(
       ((time - 1.hour)..(time + 1.hour)).cover? t

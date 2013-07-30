@@ -17,7 +17,7 @@ module Clockwork
       case at
       when /^([[:alpha:]]+)\s(.*)$/
         ret = parse($2)
-        wday = WDAYS.find_index {|x| x.include?($1) }
+        wday = WDAYS.find_index { |x| x.include?($1) }
         raise FailedToParse, at if wday.nil?
         ret.wday = wday
         ret

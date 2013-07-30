@@ -4,7 +4,7 @@ STDERR.sync = STDOUT.sync = true
 
 require 'clockwork'
 
-usage = "clockwork <clock.rb>"
+usage = 'clockwork <clock.rb>'
 file = ARGV.shift or abort usage
 
 file = "./#{file}" unless file.match(/^[\/.]/)

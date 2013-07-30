@@ -1,7 +1,7 @@
-require "bundler/gem_tasks"
+require 'bundler/gem_tasks'
 
 task 'test' do
-  sh "ruby test/clockwork_test.rb"
+  sh 'ruby test/clockwork_test.rb'
 end
 
 task :default => :test
