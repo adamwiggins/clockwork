@@ -180,17 +180,20 @@ class ClockworkTest < Test::Unit::TestCase
       config[:sleep_timeout] = 200
       config[:logger] = "A Logger"
       config[:max_threads] = 10
+      config[:thread] = true
     end
 
     assert_equal 200, Clockwork.config[:sleep_timeout]
     assert_equal "A Logger", Clockwork.config[:logger]
     assert_equal 10, Clockwork.config[:max_threads]
+    assert_equal true, Clockwork.config[:thread]
   end
 
   test "configuration should have reasonable defaults" do
     assert_equal 1, Clockwork.config[:sleep_timeout]
     assert Clockwork.config[:logger].is_a?(Logger)
     assert_equal 10, Clockwork.config[:max_threads]
+    assert_equal false, Clockwork.config[:thread]
   end
 
   test "should be able to specify a different timezone than local" do
@@ -269,6 +272,36 @@ class ClockworkTest < Test::Unit::TestCase
     event.expects(:log_error).with("Threads exhausted; skipping #{event}")
 
     Clockwork.tick(Time.now)
+  end
+
+  describe "thread option" do
+    test "should not use thread by default" do
+      event = Clockwork.every(1.minute, 'myjob')
+      assert !event.thread?
+    end
+
+    test "should use thread if thread option is specified with truly value" do
+      event = Clockwork.every(1.minute, 'myjob', :thread => true)
+      assert event.thread?
+    end
+
+    test "should use thread if global thread option is set" do
+      Clockwork.configure do |config|
+        config[:thread] = true
+      end
+
+      event = Clockwork.every(1.minute, 'myjob')
+      assert event.thread?
+    end
+
+    test "should not use thread if job option overrides global option" do
+      Clockwork.configure do |config|
+        config[:thread] = true
+      end
+
+      event = Clockwork.every(1.minute, 'myjob', :thread => false)
+      assert !event.thread?
+    end
   end
 
 end
