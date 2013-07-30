@@ -69,9 +69,7 @@ module Clockwork
         end
       end
 
-      if options[:thread]
-        @thread = options[:thread]
-      end
+      @thread = !!(options.has_key?(:thread) ? options[:thread] : Clockwork.config[:thread])
 
       @timezone = options[:tz] || Clockwork.config[:tz]
     end
@@ -146,7 +144,7 @@ module Clockwork
   extend self
 
   def default_configuration
-    { :sleep_timeout => 1, :logger => Logger.new(STDOUT), :max_threads => 10 }
+    { :sleep_timeout => 1, :logger => Logger.new(STDOUT), :thread => false, :max_threads => 10 }
   end
 
   @@configuration = default_configuration
