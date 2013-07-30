@@ -94,16 +94,12 @@ module Clockwork
       @thread
     end
 
-    def thread_available?
-      Thread.list.count < Clockwork.config[:max_threads]
-    end
-
     def run(t)
       t = convert_timezone(t)
       @last = t
 
       if thread?
-        if thread_available?
+        if Clockwork.thread_available?
           Thread.new { execute }
         else
           log_error "Threads exhausted; skipping #{self}"
@@ -133,6 +129,10 @@ module Clockwork
 
       msg.join("\n")
     end
+  end
+
+  def thread_available?
+    Thread.list.count < config[:max_threads]
   end
 
   def configure
