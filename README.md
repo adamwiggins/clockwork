@@ -16,51 +16,59 @@ Quickstart
 
 Create clock.rb:
 
-    require 'clockwork'
-    include Clockwork
+```ruby
+require 'clockwork'
+include Clockwork
 
-    handler do |job|
-      puts "Running #{job}"
-    end
+handler do |job|
+  puts "Running #{job}"
+end
 
-    every(10.seconds, 'frequent.job')
-    every(3.minutes, 'less.frequent.job')
-    every(1.hour, 'hourly.job')
+every(10.seconds, 'frequent.job')
+every(3.minutes, 'less.frequent.job')
+every(1.hour, 'hourly.job')
 
-    every(1.day, 'midnight.job', :at => '00:00')
+every(1.day, 'midnight.job', :at => '00:00')
+```
 
 Run it with the clockwork binary:
 
-    $ clockwork clock.rb
-    Starting clock for 4 events: [ frequent.job less.frequent.job hourly.job midnight.job ]
-    Triggering frequent.job
+```
+$ clockwork clock.rb
+Starting clock for 4 events: [ frequent.job less.frequent.job hourly.job midnight.job ]
+Triggering frequent.job
+```
 
 If you would not like to taint the namespace with `include Clockwork`, you can use
 it as the module (thanks to [hoverlover](https://github.com/hoverlover/clockwork/)).
 
-    require 'clockwork'
+```ruby
+require 'clockwork'
 
-    module Clockwork
+module Clockwork
 
-      configure do |config|
-        config[:tz] = "America/Chicago"
-      end
+  configure do |config|
+    config[:tz] = "America/Chicago"
+  end
 
-      handler do |job|
-        puts "Running #{job}"
-      end
+  handler do |job|
+    puts "Running #{job}"
+  end
 
-      every(10.seconds, 'frequent.job')
-      every(3.minutes, 'less.frequent.job')
-      every(1.hour, 'hourly.job')
+  every(10.seconds, 'frequent.job')
+  every(3.minutes, 'less.frequent.job')
+  every(1.hour, 'hourly.job')
 
-      every(1.day, 'midnight.job', :at => '00:00')
-    end
+  every(1.day, 'midnight.job', :at => '00:00')
+end
+```
 
 If you need to load your entire environment for your jobs, simply add:
 
-    require './config/boot'
-		require './config/environment'
+```ruby
+require './config/boot'
+require './config/environment'
+```
 
 under the `require 'clockwork'` declaration.
 
@@ -89,12 +97,14 @@ scalability.
 
 For example, if you're using Beanstalk/Staker:
 
-    require 'stalker'
+```ruby
+require 'stalker'
 
-    handler { |job| Stalker.enqueue(job) }
+handler { |job| Stalker.enqueue(job) }
 
-    every(1.hour, 'feeds.refresh')
-    every(1.day, 'reminders.send', :at => '01:30')
+every(1.hour, 'feeds.refresh')
+every(1.day, 'reminders.send', :at => '01:30')
+```
 
 Using a queueing system which doesn't require that your full application be
 loaded is preferable, because the clock process can keep a tiny memory
@@ -102,11 +112,13 @@ footprint.  If you're using DJ or Resque, however, you can go ahead and load
 your full application enviroment, and use per-event blocks to call DJ or Resque
 enqueue methods.  For example, with DJ/Rails:
 
-    require 'config/boot'
-    require 'config/environment'
+```ruby
+require 'config/boot'
+require 'config/environment'
 
-    every(1.hour, 'feeds.refresh') { Feed.send_later(:refresh) }
-    every(1.day, 'reminders.send', :at => '01:30') { Reminder.send_later(:send_reminders) }
+every(1.hour, 'feeds.refresh') { Feed.send_later(:refresh) }
+every(1.day, 'reminders.send', :at => '01:30') { Reminder.send_later(:send_reminders) }
+```
 
 Parameters
 ----------
@@ -117,26 +129,36 @@ Parameters
 
 The simplest example:
 
-    every(1.day, 'reminders.send', :at => '01:30')
+```ruby
+every(1.day, 'reminders.send', :at => '01:30')
+```
 
 You can omit 0 of the hour:
 
-    every(1.day, 'reminders.send', :at => '1:30')
+```ruby
+every(1.day, 'reminders.send', :at => '1:30')
+```
 
 The wildcard for hour is supported:
 
-    every(1.hour, 'reminders.send', :at => '**:30')
+```ruby
+every(1.hour, 'reminders.send', :at => '**:30')
+```
 
 You can set more than one timing:
 
-    every(1.hour, 'reminders.send', :at => ['12:00', '18:00'])
-    # send reminders at noon and evening
+```ruby
+every(1.hour, 'reminders.send', :at => ['12:00', '18:00'])
+# send reminders at noon and evening
+```
 
 You can also specify a timezone (default is the local timezone):
 
-    every(1.day, 'reminders.send', :at => '00:00', :tz => 'UTC')
-    # Runs the job each day at midnight, UTC.
-    # The value for :tz can be anything supported by [TZInfo](http://tzinfo.rubyforge.org/)
+```ruby
+every(1.day, 'reminders.send', :at => '00:00', :tz => 'UTC')
+# Runs the job each day at midnight, UTC.
+# The value for :tz can be anything supported by [TZInfo](http://tzinfo.rubyforge.org/)
+```
 
 ### :if
 
@@ -145,14 +167,17 @@ return value is true.
 
 Run on every first day of month.
 
-    Clockwork.every(1.day, 'myjob', :if => lambda { |t| t.day == 1 })
+```ruby
+Clockwork.every(1.day, 'myjob', :if => lambda { |t| t.day == 1 })
+```
 
 The argument is an instance of `ActiveSupport::TimeWithZone` if the `:tz` option is set. Otherwise, it's an instance of `Time`.
 
 This argument cannot be omitted.  Please use _ as placeholder if not needed.
 
-    Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
-
+```ruby
+Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
+```
 
 ### :thread
 
@@ -188,12 +213,14 @@ jobs.
 
 ### Configuration example
 
-    Clockwork.configure do |config|
-      config[:sleep_timeout] = 5
-      config[:logger] = Logger.new(log_file_path)
-      config[:tz] = 'EST'
-      config[:max_threads] = 15
-    end
+```ruby
+Clockwork.configure do |config|
+  config[:sleep_timeout] = 5
+  config[:logger] = Logger.new(log_file_path)
+  config[:tz] = 'EST'
+  config[:max_threads] = 15
+end
+```
 
 Anatomy of a clock file
 -----------------------
@@ -205,7 +232,9 @@ and then the events themselves.
 
 The handler typically looks like this:
 
-    handler { |job| enqueue_your_job(job) }
+```ruby
+handler { |job| enqueue_your_job(job) }
+```
 
 This block will be invoked every time an event is triggered, with the job name
 passed in.  In most cases, you should be able to pass the job name directly
@@ -213,8 +242,10 @@ through to your queueing system.
 
 The second part of the file are the events, which roughly resembles a crontab:
 
-    every(5.minutes, 'thing.do')
-    every(1.hour, 'otherthing.do')
+```ruby
+every(5.minutes, 'thing.do')
+every(1.hour, 'otherthing.do')
+```
 
 In the first line of this example, an event will be triggered once every five
 minutes, passing the job name 'thing.do' into the handler.  The handler shown
@@ -225,16 +256,20 @@ rely on classes rather than job names (i.e. DJ and Resque).  In this case, you
 need not define a general event handler, and instead provide one with each
 event:
 
-    every(5.minutes, 'thing.do') { Thing.send_later(:do) }
+```ruby
+every(5.minutes, 'thing.do') { Thing.send_later(:do) }
+```
 
 If you provide a custom handler for the block, the job name is used only for
 logging.
 
 You can also use blocks to do more complex checks:
 
-    every(1.day, 'check.leap.year') do
-      Stalker.enqueue('leap.year.party') if Time.now.year % 4 == 0
-    end
+```ruby
+every(1.day, 'check.leap.year') do
+  Stalker.enqueue('leap.year.party') if Time.now.year % 4 == 0
+end
+```
 
 In production
 -------------
@@ -259,7 +294,9 @@ You need `daemons` gem to use `clockworkd`.  It is not automatically installed, 
 
 Then,
 
-    clockworkd -c YOUR_CLOCK.rb start
+```
+clockworkd -c YOUR_CLOCK.rb start
+```
 
 For more details, see help shown by `clockworkd`.
 
