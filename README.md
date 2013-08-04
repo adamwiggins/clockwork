@@ -42,6 +42,10 @@ Triggering frequent.job
 If you would not like to taint the namespace with `include Clockwork`, you can use
 it as the module (thanks to [hoverlover](https://github.com/hoverlover/clockwork/)).
 
+As reported in [issue #41](https://github.com/tomykaira/clockwork/issues/41#issuecomment-22073609),
+this technique is necessary when you use Clockwork with Sinatra,
+because both Sinatra and Clockwork add `register()` method into global namespace.
+
 ```ruby
 require 'clockwork'
 
