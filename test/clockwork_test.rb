@@ -62,28 +62,6 @@ class ClockworkTest < Test::Unit::TestCase
     assert_will_run(t+60*60*24*7)
   end
 
-  test "once a day at 16:20" do
-    Clockwork.every(1.day, 'myjob', :at => '16:20')
-
-    assert_wont_run 'jan 1 2010 16:19:59'
-    assert_will_run 'jan 1 2010 16:20:00'
-    assert_wont_run 'jan 1 2010 16:20:01'
-    assert_wont_run 'jan 2 2010 16:19:59'
-    assert_will_run 'jan 2 2010 16:20:00'
-  end
-
-  test "twice a day at 16:20 and 18:10" do
-    Clockwork.every(1.day, 'myjob', :at => ['16:20', '18:10'])
-
-    assert_wont_run 'jan 1 2010 16:19:59'
-    assert_will_run 'jan 1 2010 16:20:00'
-    assert_wont_run 'jan 1 2010 16:20:01'
-
-    assert_wont_run 'jan 1 2010 18:09:59'
-    assert_will_run 'jan 1 2010 18:10:00'
-    assert_wont_run 'jan 1 2010 18:10:01'
-  end
-
   test "aborts when no handler defined" do
     Clockwork.clear!
     assert_raise(Clockwork::NoHandlerDefined) do
@@ -152,70 +130,98 @@ class ClockworkTest < Test::Unit::TestCase
     assert_equal false, Clockwork.config[:thread]
   end
 
-  test "should be able to specify a different timezone than local" do
-    Clockwork.every(1.day, 'myjob', :at => '10:00', :tz => 'UTC')
+  describe ':at option' do
+    test "once a day at 16:20" do
+      Clockwork.every(1.day, 'myjob', :at => '16:20')
 
-    assert_wont_run 'jan 1 2010 10:00:00 EST'
-    assert_will_run 'jan 1 2010 10:00:00 UTC'
+      assert_wont_run 'jan 1 2010 16:19:59'
+      assert_will_run 'jan 1 2010 16:20:00'
+      assert_wont_run 'jan 1 2010 16:20:01'
+      assert_wont_run 'jan 2 2010 16:19:59'
+      assert_will_run 'jan 2 2010 16:20:00'
+    end
+
+    test "twice a day at 16:20 and 18:10" do
+      Clockwork.every(1.day, 'myjob', :at => ['16:20', '18:10'])
+
+      assert_wont_run 'jan 1 2010 16:19:59'
+      assert_will_run 'jan 1 2010 16:20:00'
+      assert_wont_run 'jan 1 2010 16:20:01'
+
+      assert_wont_run 'jan 1 2010 18:09:59'
+      assert_will_run 'jan 1 2010 18:10:00'
+      assert_wont_run 'jan 1 2010 18:10:01'
+    end
   end
 
-  test "should be able to specify a different timezone than local for multiple times" do
-    Clockwork.every(1.day, 'myjob', :at => ['10:00', '8:00'], :tz => 'UTC')
+  describe ':tz option' do
+    test "should be able to specify a different timezone than local" do
+      Clockwork.every(1.day, 'myjob', :at => '10:00', :tz => 'UTC')
 
-    assert_wont_run 'jan 1 2010 08:00:00 EST'
-    assert_will_run 'jan 1 2010 08:00:00 UTC'
-    assert_wont_run 'jan 1 2010 10:00:00 EST'
-    assert_will_run 'jan 1 2010 10:00:00 UTC'
+      assert_wont_run 'jan 1 2010 10:00:00 EST'
+      assert_will_run 'jan 1 2010 10:00:00 UTC'
+    end
+
+    test "should be able to specify a different timezone than local for multiple times" do
+      Clockwork.every(1.day, 'myjob', :at => ['10:00', '8:00'], :tz => 'UTC')
+
+      assert_wont_run 'jan 1 2010 08:00:00 EST'
+      assert_will_run 'jan 1 2010 08:00:00 UTC'
+      assert_wont_run 'jan 1 2010 10:00:00 EST'
+      assert_will_run 'jan 1 2010 10:00:00 UTC'
+    end
+
+    test "should be able to configure a default timezone to use for all events" do
+      Clockwork.configure { |config| config[:tz] = 'UTC' }
+      Clockwork.every(1.day, 'myjob', :at => '10:00')
+
+      assert_wont_run 'jan 1 2010 10:00:00 EST'
+      assert_will_run 'jan 1 2010 10:00:00 UTC'
+    end
+
+    test "should be able to override a default timezone in an event" do
+      Clockwork.configure { |config| config[:tz] = 'UTC' }
+      Clockwork.every(1.day, 'myjob', :at => '10:00', :tz => 'EST')
+
+      assert_will_run 'jan 1 2010 10:00:00 EST'
+      assert_wont_run 'jan 1 2010 10:00:00 UTC'
+    end
   end
 
-  test "should be able to configure a default timezone to use for all events" do
-    Clockwork.configure { |config| config[:tz] = 'UTC' }
-    Clockwork.every(1.day, 'myjob', :at => '10:00')
+  describe ':if option' do
+    test ":if true then always run" do
+      Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
 
-    assert_wont_run 'jan 1 2010 10:00:00 EST'
-    assert_will_run 'jan 1 2010 10:00:00 UTC'
-  end
+      assert_will_run 'jan 1 2010 16:20:00'
+    end
 
-  test "should be able to override a default timezone in an event" do
-    Clockwork.configure { |config| config[:tz] = 'UTC' }
-    Clockwork.every(1.day, 'myjob', :at => '10:00', :tz => 'EST')
+    test ":if false then never run" do
+      Clockwork.every(1.second, 'myjob', :if => lambda { |_| false })
 
-    assert_will_run 'jan 1 2010 10:00:00 EST'
-    assert_wont_run 'jan 1 2010 10:00:00 UTC'
-  end
+      assert_wont_run 'jan 1 2010 16:20:00'
+    end
 
-  test ":if true then always run" do
-    Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
+    test ":if the first day of month" do
+      Clockwork.every(1.second, 'myjob', :if => lambda { |t| t.day == 1 })
 
-    assert_will_run 'jan 1 2010 16:20:00'
-  end
+      assert_will_run 'jan 1 2010 16:20:00'
+      assert_wont_run 'jan 2 2010 16:20:00'
+      assert_will_run 'feb 1 2010 16:20:00'
+    end
 
-  test ":if false then never run" do
-    Clockwork.every(1.second, 'myjob', :if => lambda { |_| false })
+    test ":if it is compared to a time with zone" do
+      tz = 'America/Chicago'
+      time = Time.utc(2012,5,25,10,00)
+      Clockwork.every(1.second, 'myjob', tz: tz, :if => lambda  { |t|
+            ((time - 1.hour)..(time + 1.hour)).cover? t
+            })
+      assert_will_run time
+    end
 
-    assert_wont_run 'jan 1 2010 16:20:00'
-  end
-
-  test ":if the first day of month" do
-    Clockwork.every(1.second, 'myjob', :if => lambda { |t| t.day == 1 })
-
-    assert_will_run 'jan 1 2010 16:20:00'
-    assert_wont_run 'jan 2 2010 16:20:00'
-    assert_will_run 'feb 1 2010 16:20:00'
-  end
-
-  test ":if it is compared to a time with zone" do
-    tz = 'America/Chicago'
-    time = Time.utc(2012,5,25,10,00)
-    Clockwork.every(1.second, 'myjob', tz: tz, :if => lambda  { |t|(
-      ((time - 1.hour)..(time + 1.hour)).cover? t
-    )})
-    assert_will_run time
-  end
-
-  test ":if is not callable then raise ArgumentError" do
-    assert_raise(ArgumentError) do
-      Clockwork.every(1.second, 'myjob', :if => true)
+    test ":if is not callable then raise ArgumentError" do
+      assert_raise(ArgumentError) do
+        Clockwork.every(1.second, 'myjob', :if => true)
+      end
     end
   end
 
