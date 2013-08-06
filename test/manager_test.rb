@@ -91,8 +91,11 @@ class ManagerTest < Test::Unit::TestCase
 
   test "exceptions are trapped and logged" do
     @manager.handler { raise 'boom' }
-    event = @manager.every(1.minute, 'myjob')
-    event.expects(:log_error)
+    @manager.every(1.minute, 'myjob')
+
+    logger = Logger.new(StringIO.new)
+    @manager.configure { |c| c[:logger] = logger }
+    logger.expects(:error)
 
     assert_nothing_raised do
       @manager.tick(Time.now)
@@ -224,12 +227,14 @@ class ManagerTest < Test::Unit::TestCase
   end
 
   test "should warn about missing jobs upon exhausting threads" do
+    logger = Logger.new(StringIO.new)
     @manager.configure do |config|
       config[:max_threads] = 0
+      config[:logger] = logger
     end
 
-    event = @manager.every(1.minute, 'myjob', :thread => true)
-    event.expects(:log_error).with("Threads exhausted; skipping #{event}")
+    @manager.every(1.minute, 'myjob', :thread => true)
+    logger.expects(:error).with("Threads exhausted; skipping myjob")
 
     @manager.tick(Time.now)
   end

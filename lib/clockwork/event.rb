@@ -2,7 +2,8 @@ module Clockwork
   class Event
     attr_accessor :job, :last
 
-    def initialize(period, job, block, options={})
+    def initialize(manager, period, job, block, options={})
+      @manager = manager
       @period = period
       @job = job
       @at = At.parse(options[:at])
@@ -36,7 +37,7 @@ module Clockwork
       @last = t
 
       if thread?
-        if Clockwork.thread_available?
+        if @manager.thread_available?
           Thread.new { execute }
         else
           log_error "Threads exhausted; skipping #{self}"
@@ -53,7 +54,7 @@ module Clockwork
     end
 
     def log_error(e)
-      Clockwork.config[:logger].error(e)
+      @manager.config[:logger].error(e)
     end
 
     def exception_message(e)

@@ -70,7 +70,7 @@ module Clockwork
     end
 
     def register(period, job, block, options)
-      event = Event.new(period, job, block || get_handler, parse_event_option(options))
+      event = Event.new(self, period, job, block || get_handler, parse_event_option(options))
       @events << event
       event
     end
