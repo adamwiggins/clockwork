@@ -8,17 +8,9 @@ module Clockwork
       @at = At.parse(options[:at])
       @last = nil
       @block = block
-      if options[:if]
-        if options[:if].respond_to?(:call)
-          @if = options[:if]
-        else
-          raise ArgumentError.new(':if expects a callable object, but #{options[:if]} does not respond to call')
-        end
-      end
-
-      @thread = !!(options.has_key?(:thread) ? options[:thread] : Clockwork.config[:thread])
-
-      @timezone = options[:tz] || Clockwork.config[:tz]
+      @if = options[:if]
+      @thread = options[:thread]
+      @timezone = options[:tz]
     end
 
     def to_s
