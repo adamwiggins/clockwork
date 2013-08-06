@@ -1,307 +1,62 @@
 require File.expand_path('../../lib/clockwork', __FILE__)
-require 'rubygems'
 require 'contest'
-require 'mocha/setup'
-require 'time'
-require 'active_support/time'
-
-module Clockwork
-  def log(msg)
-  end
-end
+require 'timeout'
 
 class ClockworkTest < Test::Unit::TestCase
-  setup do
+  teardown do
     Clockwork.clear!
-    Clockwork.handler { }
   end
 
-  def assert_will_run(t)
-    if t.is_a? String
-      t = Time.parse(t)
+  def set_string_io_logger
+    string_io = StringIO.new
+    Clockwork.configure do |config|
+      config[:logger] = Logger.new(string_io)
     end
-    assert_equal 1, Clockwork.tick(t).size
+    string_io
   end
 
-  def assert_wont_run(t)
-    if t.is_a? String
-      t = Time.parse(t)
+  def run_in_thread
+    Thread.new do
+      Clockwork.run
     end
-    assert_equal 0, Clockwork.tick(t).size
   end
 
-  test "once a minute" do
+  test 'should run events with configured logger' do
+    run = false
+    string_io = set_string_io_logger
+    Clockwork.handler do |job|
+      run = job == 'myjob'
+    end
     Clockwork.every(1.minute, 'myjob')
 
-    assert_will_run(t=Time.now)
-    assert_wont_run(t+30)
-    assert_will_run(t+60)
+    runner = run_in_thread
+
+    timeout(5) do
+      sleep 1 until run
+    end
+    runner.kill
+    assert run
+    assert string_io.string.include?('Triggering')
   end
 
-  test "every three minutes" do
-    Clockwork.every(3.minutes, 'myjob')
-
-    assert_will_run(t=Time.now)
-    assert_wont_run(t+2*60)
-    assert_will_run(t+3*60)
-  end
-
-  test "once an hour" do
-    Clockwork.every(1.hour, 'myjob')
-
-    assert_will_run(t=Time.now)
-    assert_wont_run(t+30*60)
-    assert_will_run(t+60*60)
-  end
-
-  test "once a week" do
-    Clockwork.every(1.week, 'myjob')
-
-    assert_will_run(t=Time.now)
-    assert_wont_run(t+60*60*24*6)
-    assert_will_run(t+60*60*24*7)
-  end
-
-  test "once a day at 16:20" do
-    Clockwork.every(1.day, 'myjob', :at => '16:20')
-
-    assert_wont_run 'jan 1 2010 16:19:59'
-    assert_will_run 'jan 1 2010 16:20:00'
-    assert_wont_run 'jan 1 2010 16:20:01'
-    assert_wont_run 'jan 2 2010 16:19:59'
-    assert_will_run 'jan 2 2010 16:20:00'
-  end
-
-  test ":at also accepts 8:20" do
-    Clockwork.every(1.hour, 'myjob', :at => '8:20')
-
-    assert_wont_run 'jan 1 2010 08:19:59'
-    assert_will_run 'jan 1 2010 08:20:00'
-    assert_wont_run 'jan 1 2010 08:20:01'
-  end
-
-  test "twice a day at 16:20 and 18:10" do
-    Clockwork.every(1.day, 'myjob', :at => ['16:20', '18:10'])
-
-    assert_wont_run 'jan 1 2010 16:19:59'
-    assert_will_run 'jan 1 2010 16:20:00'
-    assert_wont_run 'jan 1 2010 16:20:01'
-
-    assert_wont_run 'jan 1 2010 18:09:59'
-    assert_will_run 'jan 1 2010 18:10:00'
-    assert_wont_run 'jan 1 2010 18:10:01'
-  end
-
-  test "once an hour at **:20" do
-    Clockwork.every(1.hour, 'myjob', :at => '**:20')
-
-    assert_wont_run 'jan 1 2010 15:19:59'
-    assert_will_run 'jan 1 2010 15:20:00'
-    assert_wont_run 'jan 1 2010 15:20:01'
-    assert_wont_run 'jan 2 2010 16:19:59'
-    assert_will_run 'jan 2 2010 16:20:00'
-  end
-
-  test ":at also accepts *:20" do
-    Clockwork.every(1.hour, 'myjob', :at => '*:20')
-
-    assert_wont_run 'jan 1 2010 15:19:59'
-    assert_will_run 'jan 1 2010 15:20:00'
-    assert_wont_run 'jan 1 2010 15:20:01'
-  end
-
-  test "on every Saturday" do
-    Clockwork.every(1.week, 'myjob', :at => 'Saturday 12:00')
-
-    assert_wont_run 'jan 1 2010 12:00:00'
-    assert_will_run 'jan 2 2010 12:00:00' # Saturday
-    assert_wont_run 'jan 3 2010 12:00:00'
-    assert_wont_run 'jan 8 2010 12:00:00'
-    assert_will_run 'jan 9 2010 12:00:00'
-  end
-
-  test ":at accepts abbreviated weekday" do
-    Clockwork.every(1.week, 'myjob', :at => 'sat 12:00')
-
-    assert_wont_run 'jan 1 2010 12:00:00'
-    assert_will_run 'jan 2 2010 12:00:00' # Saturday
-    assert_wont_run 'jan 3 2010 12:00:00'
-  end
-
-  test "aborts when no handler defined" do
+  test 'should not run anything after reset' do
+    Clockwork.every(1.minute, 'myjob') {  }
     Clockwork.clear!
-    assert_raise(Clockwork::NoHandlerDefined) do
-      Clockwork.every(1.minute, 'myjob')
-    end
+
+    string_io = set_string_io_logger
+    runner = run_in_thread
+    sleep 1
+    runner.kill
+    assert string_io.string.include?('0 events')
   end
 
-  test "aborts when fails to parse" do
-    assert_raise(Clockwork::At::FailedToParse) do
-      Clockwork.every(1.day, "myjob", :at => "a:bc")
-    end
+  test 'should pass all arguments to every' do
+    Clockwork.every(1.second, 'myjob', if: lambda { false }) {  }
+    string_io = set_string_io_logger
+    runner = run_in_thread
+    sleep 1
+    runner.kill
+    assert string_io.string.include?('1 events')
+    assert !string_io.string.include?('Triggering')
   end
-
-  test "general handler" do
-    $set_me = 0
-    Clockwork.handler { $set_me = 1 }
-    Clockwork.every(1.minute, 'myjob')
-    Clockwork.tick(Time.now)
-    assert_equal 1, $set_me
-  end
-
-  test "event-specific handler" do
-    $set_me = 0
-    Clockwork.every(1.minute, 'myjob') { $set_me = 2 }
-    Clockwork.tick(Time.now)
-
-    assert_equal 2, $set_me
-  end
-
-  test "exceptions are trapped and logged" do
-    Clockwork.handler { raise 'boom' }
-    event = Clockwork.every(1.minute, 'myjob')
-    event.expects(:log_error)
-
-    assert_nothing_raised do
-      Clockwork.tick(Time.now)
-    end
-  end
-
-  test "exceptions still set the last timestamp to avoid spastic error loops" do
-    Clockwork.handler { raise 'boom' }
-    event = Clockwork.every(1.minute, 'myjob')
-    event.stubs(:log_error)
-    Clockwork.tick(t = Time.now)
-    assert_equal t, event.last
-  end
-
-  test "should be configurable" do
-    Clockwork.configure do |config|
-      config[:sleep_timeout] = 200
-      config[:logger] = "A Logger"
-      config[:max_threads] = 10
-      config[:thread] = true
-    end
-
-    assert_equal 200, Clockwork.config[:sleep_timeout]
-    assert_equal "A Logger", Clockwork.config[:logger]
-    assert_equal 10, Clockwork.config[:max_threads]
-    assert_equal true, Clockwork.config[:thread]
-  end
-
-  test "configuration should have reasonable defaults" do
-    assert_equal 1, Clockwork.config[:sleep_timeout]
-    assert Clockwork.config[:logger].is_a?(Logger)
-    assert_equal 10, Clockwork.config[:max_threads]
-    assert_equal false, Clockwork.config[:thread]
-  end
-
-  test "should be able to specify a different timezone than local" do
-    Clockwork.every(1.day, 'myjob', :at => '10:00', :tz => 'UTC')
-
-    assert_wont_run 'jan 1 2010 10:00:00 EST'
-    assert_will_run 'jan 1 2010 10:00:00 UTC'
-  end
-
-  test "should be able to specify a different timezone than local for multiple times" do
-    Clockwork.every(1.day, 'myjob', :at => ['10:00', '8:00'], :tz => 'UTC')
-
-    assert_wont_run 'jan 1 2010 08:00:00 EST'
-    assert_will_run 'jan 1 2010 08:00:00 UTC'
-    assert_wont_run 'jan 1 2010 10:00:00 EST'
-    assert_will_run 'jan 1 2010 10:00:00 UTC'
-  end
-
-  test "should be able to configure a default timezone to use for all events" do
-    Clockwork.configure { |config| config[:tz] = 'UTC' }
-    Clockwork.every(1.day, 'myjob', :at => '10:00')
-
-    assert_wont_run 'jan 1 2010 10:00:00 EST'
-    assert_will_run 'jan 1 2010 10:00:00 UTC'
-  end
-
-  test "should be able to override a default timezone in an event" do
-    Clockwork.configure { |config| config[:tz] = 'UTC' }
-    Clockwork.every(1.day, 'myjob', :at => '10:00', :tz => 'EST')
-
-    assert_will_run 'jan 1 2010 10:00:00 EST'
-    assert_wont_run 'jan 1 2010 10:00:00 UTC'
-  end
-
-  test ":if true then always run" do
-    Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
-
-    assert_will_run 'jan 1 2010 16:20:00'
-  end
-
-  test ":if false then never run" do
-    Clockwork.every(1.second, 'myjob', :if => lambda { |_| false })
-
-    assert_wont_run 'jan 1 2010 16:20:00'
-  end
-
-  test ":if the first day of month" do
-    Clockwork.every(1.second, 'myjob', :if => lambda { |t| t.day == 1 })
-
-    assert_will_run 'jan 1 2010 16:20:00'
-    assert_wont_run 'jan 2 2010 16:20:00'
-    assert_will_run 'feb 1 2010 16:20:00'
-  end
-
-  test ":if it is compared to a time with zone" do
-    tz = 'America/Chicago'
-    time = Time.utc(2012,5,25,10,00)
-    Clockwork.every(1.second, 'myjob', tz: tz, :if => lambda  { |t|(
-      ((time - 1.hour)..(time + 1.hour)).cover? t
-    )})
-    assert_will_run time
-  end
-
-  test ":if is not callable then raise ArgumentError" do
-    assert_raise(ArgumentError) do
-      Clockwork.every(1.second, 'myjob', :if => true)
-    end
-  end
-
-  test "should warn about missing jobs upon exhausting threads" do
-    Clockwork.configure do |config|
-      config[:max_threads] = 0
-    end
-
-    event = Clockwork.every(1.minute, 'myjob', :thread => true)
-    event.expects(:log_error).with("Threads exhausted; skipping #{event}")
-
-    Clockwork.tick(Time.now)
-  end
-
-  describe "thread option" do
-    test "should not use thread by default" do
-      event = Clockwork.every(1.minute, 'myjob')
-      assert !event.thread?
-    end
-
-    test "should use thread if thread option is specified with truly value" do
-      event = Clockwork.every(1.minute, 'myjob', :thread => true)
-      assert event.thread?
-    end
-
-    test "should use thread if global thread option is set" do
-      Clockwork.configure do |config|
-        config[:thread] = true
-      end
-
-      event = Clockwork.every(1.minute, 'myjob')
-      assert event.thread?
-    end
-
-    test "should not use thread if job option overrides global option" do
-      Clockwork.configure do |config|
-        config[:thread] = true
-      end
-
-      event = Clockwork.every(1.minute, 'myjob', :thread => false)
-      assert !event.thread?
-    end
-  end
-
 end

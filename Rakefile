@@ -1,7 +1,9 @@
 require 'bundler/gem_tasks'
+require 'rake/testtask'
 
-task 'test' do
-  sh 'ruby test/clockwork_test.rb'
+Rake::TestTask.new do |t|
+  t.test_files = FileList['test/*_test.rb']
+  t.verbose = false
 end
 
 task :default => :test
