@@ -48,6 +48,26 @@ class AtTest < Test::Unit::TestCase
     assert !at.ready?(time_in_day(16, 21))
   end
 
+  test '16:**' do
+    at = Clockwork::At.parse('16:**')
+
+    assert !at.ready?(time_in_day(15, 59))
+    assert  at.ready?(time_in_day(16, 00))
+    assert  at.ready?(time_in_day(16, 30))
+    assert  at.ready?(time_in_day(16, 59))
+    assert !at.ready?(time_in_day(17, 00))
+  end
+
+  test '8:**' do
+    at = Clockwork::At.parse('8:**')
+
+    assert !at.ready?(time_in_day(7, 59))
+    assert  at.ready?(time_in_day(8, 00))
+    assert  at.ready?(time_in_day(8, 30))
+    assert  at.ready?(time_in_day(8, 59))
+    assert !at.ready?(time_in_day(9, 00))
+  end
+
   test 'Saturday 12:00' do
     at = Clockwork::At.parse('Saturday 12:00')
 
