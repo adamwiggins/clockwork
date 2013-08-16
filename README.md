@@ -139,10 +139,11 @@ You can omit 0 of the hour:
 every(1.day, 'reminders.send', :at => '1:30')
 ```
 
-The wildcard for hour is supported:
+The wildcard for hour and minute is supported:
 
 ```ruby
 every(1.hour, 'reminders.send', :at => '**:30')
+every(10.seconds, 'frequent.job', :at => '9:**')
 ```
 
 You can set more than one timing:
