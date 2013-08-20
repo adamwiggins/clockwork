@@ -20,6 +20,8 @@ module Clockwork
         new($2.to_i, $1.to_i)
       when /^\*{1,2}:(\d\d)$/
         new($1.to_i)
+      when /^(\d{1,2}):\*\*$/
+        new(NOT_SPECIFIED, $1.to_i)
       else
         raise FailedToParse, at
       end
@@ -30,7 +32,7 @@ module Clockwork
     attr_writer :min, :hour, :wday
 
     def initialize(min, hour=NOT_SPECIFIED, wday=NOT_SPECIFIED)
-      if min.nil? || min < 0 || min > 59 ||
+      if (min != NOT_SPECIFIED && (min < 0 || min > 59)) ||
           (hour != NOT_SPECIFIED && (hour < 0 || hour > 23)) ||
           (wday != NOT_SPECIFIED && (wday < 0 || wday > 6))
         raise ArgumentError
@@ -41,7 +43,7 @@ module Clockwork
     end
 
     def ready?(t)
-      t.min == @min and
+      (@min == NOT_SPECIFIED or t.min == @min) and
         (@hour == NOT_SPECIFIED or t.hour == @hour) and
         (@wday == NOT_SPECIFIED or t.wday == @wday)
     end
