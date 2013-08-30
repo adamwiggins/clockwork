@@ -84,7 +84,7 @@ module Clockwork
       options
     end
     
-    def every_with_multiple_times(period, job, options, &block)
+    def every_with_multiple_times(period, job, options={}, &block)
       each_options = options.clone
       options[:at].each do |at|
         each_options[:at] = at
