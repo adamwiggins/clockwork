@@ -33,11 +33,7 @@ module Clockwork
 
     def every(period, job, options={}, &block)
       if options[:at].respond_to?(:each)
-        each_options = options.clone
-        options[:at].each do |at|
-          each_options[:at] = at
-          register(period, job, block, each_options)
-        end
+        every_with_multiple_times(period, job, options, &block)
       else
         register(period, job, block, options)
       end
@@ -86,6 +82,14 @@ module Clockwork
       options[:tz] ||= config[:tz]
 
       options
+    end
+    
+    def every_with_multiple_times(period, job, options={}, &block)
+      each_options = options.clone
+      options[:at].each do |at|
+        each_options[:at] = at
+        register(period, job, block, each_options)
+      end
     end
   end
 end
