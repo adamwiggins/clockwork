@@ -18,6 +18,10 @@ module Clockwork
     @@manager.handler(&block)
   end
 
+  def on(event, options={}, &block)
+    @@manager.on(event, options, &block)
+  end
+
   def every(period, job, options={}, &block)
     @@manager.every(period, job, options, &block)
   end
@@ -29,6 +33,7 @@ module Clockwork
   def clear!
     @@manager = Manager.new
   end
+
 end
 
 unless 1.respond_to?(:seconds)

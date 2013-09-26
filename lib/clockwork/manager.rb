@@ -6,6 +6,7 @@ module Clockwork
 
     def initialize
       @events = []
+      @callbacks = {}
       @config = default_configuration
       @handler = nil
     end
@@ -31,12 +32,21 @@ module Clockwork
       @handler
     end
 
+    def on(event, options={}, &block)
+      raise "Unsupported callback #{event}" unless [:before_tick, :after_tick, :before_run, :after_run].include?(event.to_sym)
+      (@callbacks[event.to_sym]||=[]) << block
+    end
+
     def every(period, job, options={}, &block)
       if options[:at].respond_to?(:each)
         every_with_multiple_times(period, job, options, &block)
       else
         register(period, job, block, options)
       end
+    end
+
+    def fire_callbacks(event, *args)
+      @callbacks[event].nil? || @callbacks[event].all? { |h| h.call(*args) }
     end
 
     def run
@@ -48,15 +58,21 @@ module Clockwork
     end
 
     def tick(t=Time.now)
-      to_run = @events.select do |event|
-        event.time?(t)
+      if (fire_callbacks(:before_tick))
+        to_run = @events.select do |event|
+          event.time?(t)
+        end
+
+        to_run.each do |event|
+          if (fire_callbacks(:before_run, event, t))
+            log "Triggering '#{event}'"
+            event.run(t)
+            fire_callbacks(:after_run, event, t)
+          end
+        end
       end
 
-      to_run.each do |event|
-        log "Triggering '#{event}'"
-        event.run(t)
-      end
-
+      fire_callbacks(:after_tick)
       to_run
     end
 
