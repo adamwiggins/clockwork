@@ -269,4 +269,74 @@ class ManagerTest < Test::Unit::TestCase
     end
   end
 
+  describe "callbacks" do
+    test "should not accept unknown callback name" do
+      assert_raise(RuntimeError, "Unsupported callback unknown_callback") do
+        @manager.on(:unknown_callback) do
+          true
+        end
+      end
+    end
+
+    test "should run before_tick callback once on tick" do
+      counter = 0
+      @manager.on(:before_tick) do
+        counter += 1
+      end
+      @manager.tick
+      assert_equal 1, counter
+    end
+
+    test "should not run events if before_tick returns false" do
+      @manager.on(:before_tick) do
+        false
+      end
+      @manager.every(1.second, 'myjob') { raise "should not run" }
+      @manager.tick
+    end
+
+    test "should run before_run twice if two events are registered" do
+      counter = 0
+      @manager.on(:before_run) do
+        counter += 1
+      end
+      @manager.every(1.second, 'myjob')
+      @manager.every(1.second, 'myjob2')
+      @manager.tick
+      assert_equal 2, counter
+    end
+
+    test "should run even jobs only" do
+      counter = 0
+      ran = false
+      @manager.on(:before_run) do
+        counter += 1
+        counter % 2 == 0
+      end
+      @manager.every(1.second, 'myjob') { raise "should not ran" }
+      @manager.every(1.second, 'myjob2') { ran = true }
+      @manager.tick
+      assert ran
+    end
+
+    test "should run after_run callback for each event" do
+      counter = 0
+      @manager.on(:after_run) do
+        counter += 1
+      end
+      @manager.every(1.second, 'myjob')
+      @manager.every(1.second, 'myjob2')
+      @manager.tick
+      assert_equal 2, counter
+    end
+
+    test "should run after_tick callback once" do
+      counter = 0
+      @manager.on(:after_tick) do
+        counter += 1
+      end
+      @manager.tick
+      assert_equal 1, counter
+    end
+  end
 end
