@@ -153,6 +153,12 @@ every(1.hour, 'reminders.send', :at => ['12:00', '18:00'])
 # send reminders at noon and evening
 ```
 
+You can specify the day of week to run:
+
+```ruby
+every(1.week, 'myjob', :at => 'Monday 16:20')
+```
+
 You can also specify a timezone (default is the local timezone):
 
 ```ruby
