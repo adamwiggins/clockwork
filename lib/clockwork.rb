@@ -18,6 +18,10 @@ module Clockwork
     @@manager.handler(&block)
   end
 
+  def error_handler(&block)
+    @@manager.error_handler(&block)
+  end
+
   def on(event, options={}, &block)
     @@manager.on(event, options, &block)
   end

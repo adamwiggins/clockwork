@@ -51,6 +51,7 @@ module Clockwork
       @block.call(@job)
     rescue => e
       log_error e
+      handle_error e
     end
 
     def log_error(e)
@@ -66,6 +67,12 @@ module Clockwork
       end
 
       msg.join("\n")
+    end
+
+    def handle_error(e)
+      if @manager.get_error_handler
+        @manager.get_error_handler.call(e)
+      end
     end
   end
 end

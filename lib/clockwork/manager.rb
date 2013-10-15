@@ -32,6 +32,14 @@ module Clockwork
       @handler
     end
 
+    def error_handler(&block)
+      @error_handler = block
+    end
+
+    def get_error_handler
+      @error_handler
+    end
+
     def on(event, options={}, &block)
       raise "Unsupported callback #{event}" unless [:before_tick, :after_tick, :before_run, :after_run].include?(event.to_sym)
       (@callbacks[event.to_sym]||=[]) << block
@@ -99,7 +107,7 @@ module Clockwork
 
       options
     end
-    
+
     def every_with_multiple_times(period, job, options={}, &block)
       each_options = options.clone
       options[:at].each do |at|
