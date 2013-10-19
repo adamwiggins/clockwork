@@ -229,6 +229,23 @@ Clockwork.configure do |config|
 end
 ```
 
+### error_handler
+
+You can add error_handler to define your own logging or error rescue.
+
+```ruby
+Clockwork.error_handler do |error|
+  Airbrake.notify_or_ignore(error)
+end
+```
+
+Current specifications are as follows.
+
+- defining error_handler does not disable original logging
+- errors from error_handler itself do not rescued, and stop clockwork
+
+Any suggestion about these specifications is welcome.
+
 Anatomy of a clock file
 -----------------------
 
