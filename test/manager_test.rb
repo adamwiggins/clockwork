@@ -339,4 +339,39 @@ class ManagerTest < Test::Unit::TestCase
       assert_equal 1, counter
     end
   end
+
+  describe 'error_handler' do
+    setup do
+      @errors = []
+      @manager.error_handler do |e|
+        @errors << e
+      end
+
+      # block error log
+      @string_io = StringIO.new
+      @manager.configure do |config|
+        config[:logger] = Logger.new(@string_io)
+      end
+      @manager.every(1.second, 'myjob') { raise 'test error' }
+    end
+
+    test 'registered error_handler handles error from event' do
+      @manager.tick
+      assert_equal ['test error'], @errors.map(&:message)
+    end
+
+    test 'error is notified to logger and handler' do
+      @manager.tick
+      assert @string_io.string.include?('test error')
+    end
+
+    test 'error in handler will NOT be suppressed' do
+      @manager.error_handler do |e|
+        raise e.message + ' re-raised'
+      end
+      assert_raise(RuntimeError, 'test error re-raised') do
+        @manager.tick
+      end
+    end
+  end
 end
