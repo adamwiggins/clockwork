@@ -51,7 +51,7 @@ opts = OptionParser.new do |opts|
 end
 
 @args = opts.parse!(ARGV)
-@options[:current_dir] = File.expand_path(Dir.cwd)
+@options[:current_dir] = Dir.pwd
 
 def optparser_abort(opts,message)
   $stderr.puts message
