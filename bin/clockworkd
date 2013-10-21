@@ -48,12 +48,10 @@ opts = OptionParser.new do |opts|
     @options[:file] = "./#{@options[:file]}" unless @options[:file].match(/^[\/.]/)
     @options[:file] = File.expand_path(@options[:file])
   end
-  opts.on('-d', '--dir=DIR', 'Directory to change to once the process starts') do |dir|
-    @options[:current_dir] = dir
-  end
 end
 
 @args = opts.parse!(ARGV)
+@options[:current_dir] = File.expand_path(Dir.cwd)
 
 def optparser_abort(opts,message)
   $stderr.puts message
@@ -82,7 +80,9 @@ else
 end
 
 Daemons.run_proc(process_name, :dir => @options[:pid_dir], :dir_mode => :normal, :monitor => @options[:monitor], :log_dir => @options[:log_dir], :log_output => @options[:log_output], :ARGV => @args) do |*args|
-  Dir.chdir(File.expand_path(@options[:current_dir])) if @options[:current_dir]
+  # daemons changes the current working directory to '/' when a new process is
+  # forked. We change it back to the project root directory here.
+  Dir.chdir(@options[:current_dir])
   require @options[:file]
 
   Clockwork::run
