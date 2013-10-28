@@ -6,38 +6,52 @@ require 'clockwork/event'
 require 'clockwork/manager'
 
 module Clockwork
-  extend self
+  class << self
+    def included(klass)
+      klass.send "include", Methods
+      klass.extend Methods
+    end
 
-  @@manager = Manager.new
+    def manager
+      @manager ||= Manager.new
+    end
 
-  def configure(&block)
-    @@manager.configure(&block)
+    def manager=(mng)
+      @manager = mng
+    end
   end
 
-  def handler(&block)
-    @@manager.handler(&block)
+  module Methods
+    def configure(&block)
+      Clockwork.manager.configure(&block)
+    end
+
+    def handler(&block)
+      Clockwork.manager.handler(&block)
+    end
+
+    def error_handler(&block)
+      Clockwork.manager.error_handler(&block)
+    end
+
+    def on(event, options={}, &block)
+      Clockwork.manager.on(event, options, &block)
+    end
+
+    def every(period, job, options={}, &block)
+      Clockwork.manager.every(period, job, options, &block)
+    end
+
+    def run
+      Clockwork.manager.run
+    end
+
+    def clear!
+      Clockwork.manager = Manager.new
+    end
   end
 
-  def error_handler(&block)
-    @@manager.error_handler(&block)
-  end
-
-  def on(event, options={}, &block)
-    @@manager.on(event, options, &block)
-  end
-
-  def every(period, job, options={}, &block)
-    @@manager.every(period, job, options, &block)
-  end
-
-  def run
-    @@manager.run
-  end
-
-  def clear!
-    @@manager = Manager.new
-  end
-
+  extend Methods
 end
 
 unless 1.respond_to?(:seconds)
