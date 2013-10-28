@@ -18,39 +18,7 @@ Create clock.rb:
 
 ```ruby
 require 'clockwork'
-include Clockwork
-
-handler do |job|
-  puts "Running #{job}"
-end
-
-every(10.seconds, 'frequent.job')
-every(3.minutes, 'less.frequent.job')
-every(1.hour, 'hourly.job')
-
-every(1.day, 'midnight.job', :at => '00:00')
-```
-
-Run it with the clockwork binary:
-
-```
-$ clockwork clock.rb
-Starting clock for 4 events: [ frequent.job less.frequent.job hourly.job midnight.job ]
-Triggering frequent.job
-```
-
-If you would not like to taint the namespace with `include Clockwork`, you can use
-it as the module (thanks to [hoverlover](https://github.com/hoverlover/clockwork/)).
-
-```ruby
-require 'clockwork'
-
 module Clockwork
-
-  configure do |config|
-    config[:tz] = "America/Chicago"
-  end
-
   handler do |job|
     puts "Running #{job}"
   end
@@ -61,6 +29,14 @@ module Clockwork
 
   every(1.day, 'midnight.job', :at => '00:00')
 end
+```
+
+Run it with the clockwork binary:
+
+```
+$ clockwork clock.rb
+Starting clock for 4 events: [ frequent.job less.frequent.job hourly.job midnight.job ]
+Triggering frequent.job
 ```
 
 If you need to load your entire environment for your jobs, simply add:
@@ -100,10 +76,12 @@ For example, if you're using Beanstalk/Staker:
 ```ruby
 require 'stalker'
 
-handler { |job| Stalker.enqueue(job) }
+module Clockwork
+  handler { |job| Stalker.enqueue(job) }
 
-every(1.hour, 'feeds.refresh')
-every(1.day, 'reminders.send', :at => '01:30')
+  every(1.hour, 'feeds.refresh')
+  every(1.day, 'reminders.send', :at => '01:30')
+end
 ```
 
 Using a queueing system which doesn't require that your full application be
@@ -221,11 +199,13 @@ jobs.
 ### Configuration example
 
 ```ruby
-Clockwork.configure do |config|
-  config[:sleep_timeout] = 5
-  config[:logger] = Logger.new(log_file_path)
-  config[:tz] = 'EST'
-  config[:max_threads] = 15
+module Clockwork
+  configure do |config|
+    config[:sleep_timeout] = 5
+    config[:logger] = Logger.new(log_file_path)
+    config[:tz] = 'EST'
+    config[:max_threads] = 15
+  end
 end
 ```
 
@@ -234,8 +214,10 @@ end
 You can add error_handler to define your own logging or error rescue.
 
 ```ruby
-Clockwork.error_handler do |error|
-  Airbrake.notify_or_ignore(error)
+module Clockwork
+  error_handler do |error|
+    Airbrake.notify_or_ignore(error)
+  end
 end
 ```
 
@@ -245,6 +227,14 @@ Current specifications are as follows.
 - errors from error_handler itself do not rescued, and stop clockwork
 
 Any suggestion about these specifications is welcome.
+
+Old style
+---------
+
+`include Clockwork` is old style.
+That is still supported, but not recommended, because it taint global namespace.
+
+
 
 Anatomy of a clock file
 -----------------------
@@ -323,6 +313,28 @@ clockworkd -c YOUR_CLOCK.rb start
 ```
 
 For more details, see help shown by `clockworkd`.
+
+Issues and Pull requests
+------------------------
+
+Let us know bugs you found as an issue from [Issues · tomykaira/clockwork](https://github.com/tomykaira/clockwork/issues).
+
+For a bug fix or a feature request, please send a pull-request.
+Do not forget to add tests to show how your feature works, or what bug is fixed.
+All existing tests and new tests must pass (TravisCI is watching).
+
+We want to provide simple and customizable core, so superficial changes will not be merged (e.g. supporting new event registration style).
+In most case, directly operating `Manager` realizes an idea, without touching the core.
+If you get up with a new usage, please create a gist page or an article on your website, then add to the following "Use cases" section.
+This tool is already used in various environment, so backward-incompatible requests will be mostly rejected.
+
+Use cases
+---------
+
+Feel free to add your idea or experience and send a pull-request.
+
+- [Sending errors to Airbrake](https://github.com/tomykaira/clockwork/issues/58)
+- [Read events from a database](https://github.com/tomykaira/clockwork/issues/25)
 
 Meta
 ----
