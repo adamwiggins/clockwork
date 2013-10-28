@@ -73,7 +73,7 @@ module Clockwork
 
         to_run.each do |event|
           if (fire_callbacks(:before_run, event, t))
-            log "Triggering '#{event}'"
+            log "Triggering '#{event}' at #{t}"
             event.run(t)
             fire_callbacks(:after_run, event, t)
           end
