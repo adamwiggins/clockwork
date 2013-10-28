@@ -16,8 +16,8 @@ module Clockwork
       @manager ||= Manager.new
     end
 
-    def manager=(mng)
-      @manager = mng
+    def manager=(manager)
+      @manager = manager
     end
   end
 
