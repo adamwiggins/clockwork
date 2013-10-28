@@ -59,4 +59,17 @@ class ClockworkTest < Test::Unit::TestCase
     assert string_io.string.include?('1 events')
     assert !string_io.string.include?('Triggering')
   end
+
+  test 'support module re-open style' do
+    $called = false
+    module ::Clockwork
+      every(1.second, 'myjob') { $called = true }
+    end
+    set_string_io_logger
+    runner = run_in_thread
+    sleep 1
+    runner.kill
+
+    assert $called
+  end
 end
