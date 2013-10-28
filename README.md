@@ -23,6 +23,11 @@ module Clockwork
     puts "Running #{job}"
   end
 
+  # when if you want process start time in the block
+  # handler do |job, time|
+  #   puts "Running #{job}, at #{time}"
+  # end
+
   every(10.seconds, 'frequent.job')
   every(3.minutes, 'less.frequent.job')
   every(1.hour, 'hourly.job')
