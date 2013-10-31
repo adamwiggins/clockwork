@@ -72,14 +72,4 @@ class ClockworkTest < Test::Unit::TestCase
 
     assert $called
   end
-
-  test 'should pass time to handler block' do
-    Clockwork.every(1.second, 'myjob') {|job, time| puts "execute_at:#{time}" }
-    set_string_io_logger
-    now = Time.now
-    out, err = capture_io {
-      Clockwork.class_variable_get(:@@manager).tick(now)
-    }
-    assert out.include?("execute_at:#{now}")
-  end
 end

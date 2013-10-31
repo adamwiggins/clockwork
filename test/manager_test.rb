@@ -89,6 +89,23 @@ class ManagerTest < Test::Unit::TestCase
     assert_equal 2, $set_me
   end
 
+  test "should pass time to the general handler" do
+    received = nil
+    now = Time.now
+    @manager.handler { |job, time| received = time }
+    @manager.every(1.minute, 'myjob')
+    @manager.tick(now)
+    assert_equal now, received
+  end
+
+  test "should pass time to the event-specific handler" do
+    received = nil
+    now = Time.now
+    @manager.every(1.minute, 'myjob') { |job, time| received = time }
+    @manager.tick(now)
+    assert_equal now, received
+  end
+
   test "exceptions are trapped and logged" do
     @manager.handler { raise 'boom' }
     @manager.every(1.minute, 'myjob')
