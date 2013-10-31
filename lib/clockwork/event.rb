@@ -48,7 +48,7 @@ module Clockwork
     end
 
     def execute
-      @block.call(@job)
+      @block.call(@job, @last)
     rescue => e
       log_error e
       handle_error e
