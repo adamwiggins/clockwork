@@ -3,19 +3,23 @@ module Clockwork
     class FailedToParse < StandardError; end
 
     NOT_SPECIFIED = nil
-    WDAYS = %w[sunday monday tuesday wednesday thursday friday saturday].map do |w|
-      [w, w.capitalize, w[0...3], w[0...3].capitalize]
+    WDAYS = %w[sunday monday tuesday wednesday thursday friday saturday].each.with_object({}).with_index do |(w, wdays), index|
+      [w, w.capitalize, w[0...3], w[0...3].capitalize].each do |k|
+        wdays[k] = index
+      end
     end
 
     def self.parse(at)
       return unless at
       case at
       when /^([[:alpha:]]+)\s(.*)$/
-        ret = parse($2)
-        wday = WDAYS.find_index { |x| x.include?($1) }
-        raise FailedToParse, at if wday.nil?
-        ret.wday = wday
-        ret
+        if wday = WDAYS[$1]
+          parsed_time = parse($2)
+          parsed_time.wday = wday
+          parsed_time
+        else
+          raise FailedToParse, at
+        end
       when /^(\d{1,2}):(\d\d)$/
         new($2.to_i, $1.to_i)
       when /^\*{1,2}:(\d\d)$/
