@@ -28,7 +28,7 @@ module Clockwork
     end
 
     def get_handler
-      raise NoHandlerDefined unless (defined?(@handler) and @handler)
+      raise NoHandlerDefined unless @handler
       @handler
     end
 
