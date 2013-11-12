@@ -58,7 +58,7 @@ module Clockwork
     end
 
     def run
-      log "Starting clock for #{@events.size} events: [ " + @events.map { |e| e.to_s }.join(' ') + " ]"
+      log "Starting clock for #{@events.size} events: [ #{@events.map(&:to_s).join(' ')} ]"
       loop do
         tick
         sleep(config[:sleep_timeout])
