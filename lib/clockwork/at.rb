@@ -32,20 +32,21 @@ module Clockwork
     attr_writer :min, :hour, :wday
 
     def initialize(min, hour=NOT_SPECIFIED, wday=NOT_SPECIFIED)
-      if (min != NOT_SPECIFIED && (min < 0 || min > 59)) ||
-          (hour != NOT_SPECIFIED && (hour < 0 || hour > 23)) ||
-          (wday != NOT_SPECIFIED && (wday < 0 || wday > 6))
-        raise ArgumentError
-      end
       @min = min
       @hour = hour
       @wday = wday
+      raise ArgumentError if not_valid?
     end
 
     def ready?(t)
       (@min == NOT_SPECIFIED or t.min == @min) and
         (@hour == NOT_SPECIFIED or t.hour == @hour) and
         (@wday == NOT_SPECIFIED or t.wday == @wday)
+    end
+
+    private
+    def not_valid?
+      (!(0..59).cover? @min) && (!(0..23).cover? @hour) && (!(0..6).cover? @wday)
     end
   end
 end
