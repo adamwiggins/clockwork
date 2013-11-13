@@ -39,7 +39,7 @@ module Clockwork
       @min = min
       @hour = hour
       @wday = wday
-      raise ArgumentError if not_valid?
+      raise ArgumentError unless valid?
     end
 
     def ready?(t)
@@ -49,8 +49,10 @@ module Clockwork
     end
 
     private
-    def not_valid?
-      (!(0..59).cover? @min) && (!(0..23).cover? @hour) && (!(0..6).cover? @wday)
+    def valid?
+      @min == NOT_SPECIFIED || (0..59).cover?(@min) &&
+        @hour == NOT_SPECIFIED || (0..23).cover?(@hour) &&
+        @wday == NOT_SPECIFIED || (0..6).cover?(@wday)
     end
   end
 end
