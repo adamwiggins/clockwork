@@ -84,4 +84,10 @@ class AtTest < Test::Unit::TestCase
     assert  at.ready?(Time.new(2010, 1, 2, 12, 00))
     assert !at.ready?(Time.new(2010, 1, 3, 12, 00))
   end
+
+  test 'invalid time 32:00' do
+    assert_raise Clockwork::At::FailedToParse do
+      Clockwork::At.parse('32:00')
+    end
+  end
 end

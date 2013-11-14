@@ -28,7 +28,7 @@ module Clockwork
     end
 
     def get_handler
-      raise NoHandlerDefined unless (defined?(@handler) and @handler)
+      raise NoHandlerDefined unless @handler
       @handler
     end
 
@@ -58,7 +58,7 @@ module Clockwork
     end
 
     def run
-      log "Starting clock for #{@events.size} events: [ " + @events.map { |e| e.to_s }.join(' ') + " ]"
+      log "Starting clock for #{@events.size} events: [ #{@events.map(&:to_s).join(' ')} ]"
       loop do
         tick
         sleep(config[:sleep_timeout])
