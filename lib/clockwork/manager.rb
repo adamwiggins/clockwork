@@ -84,6 +84,10 @@ module Clockwork
       to_run
     end
 
+    def log_error(e)
+      config[:logger].error(e)
+    end
+
     private
     def log(msg)
       config[:logger].info(msg)

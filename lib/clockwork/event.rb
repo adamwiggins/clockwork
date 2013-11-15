@@ -55,7 +55,7 @@ module Clockwork
     end
 
     def log_error(e)
-      @manager.config[:logger].error(e)
+      @manager.log_error(e)
     end
 
     def handle_error(e)
