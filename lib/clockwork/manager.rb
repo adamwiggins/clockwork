@@ -88,6 +88,12 @@ module Clockwork
       config[:logger].error(e)
     end
 
+    def handle_error(e)
+      if handler = get_error_handler
+        handler.call(e)
+      end
+    end
+
     private
     def log(msg)
       config[:logger].info(msg)

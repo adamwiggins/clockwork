@@ -59,9 +59,7 @@ module Clockwork
     end
 
     def handle_error(e)
-      if handler = @manager.get_error_handler
-        handler.call(e)
-      end
+      @manager.handle_error(e)
     end
   end
 end
