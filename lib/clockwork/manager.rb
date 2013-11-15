@@ -33,10 +33,7 @@ module Clockwork
     end
 
     def error_handler(&block)
-      @error_handler = block
-    end
-
-    def get_error_handler
+      @error_handler = block if block_given?
       @error_handler
     end
 
@@ -89,9 +86,7 @@ module Clockwork
     end
 
     def handle_error(e)
-      if handler = get_error_handler
-        handler.call(e)
-      end
+      error_handler.call(e) if error_handler
     end
 
     private
