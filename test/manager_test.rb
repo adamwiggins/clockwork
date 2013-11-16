@@ -122,7 +122,7 @@ class ManagerTest < Test::Unit::TestCase
   test "exceptions still set the last timestamp to avoid spastic error loops" do
     @manager.handler { raise 'boom' }
     event = @manager.every(1.minute, 'myjob')
-    event.stubs(:log_error)
+    @manager.stubs(:log_error)
     @manager.tick(t = Time.now)
     assert_equal t, event.last
   end

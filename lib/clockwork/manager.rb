@@ -24,19 +24,13 @@ module Clockwork
     end
 
     def handler(&block)
-      @handler = block
-    end
-
-    def get_handler
+      @handler = block if block_given?
       raise NoHandlerDefined unless @handler
       @handler
     end
 
     def error_handler(&block)
-      @error_handler = block
-    end
-
-    def get_error_handler
+      @error_handler = block if block_given?
       @error_handler
     end
 
@@ -84,13 +78,21 @@ module Clockwork
       to_run
     end
 
+    def log_error(e)
+      config[:logger].error(e)
+    end
+
+    def handle_error(e)
+      error_handler.call(e) if error_handler
+    end
+
     private
     def log(msg)
       config[:logger].info(msg)
     end
 
     def register(period, job, block, options)
-      event = Event.new(self, period, job, block || get_handler, parse_event_option(options))
+      event = Event.new(self, period, job, block || handler, parse_event_option(options))
       @events << event
       event
     end

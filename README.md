@@ -229,7 +229,7 @@ end
 Current specifications are as follows.
 
 - defining error_handler does not disable original logging
-- errors from error_handler itself do not rescued, and stop clockwork
+- errors from error_handler itself are not rescued, and stop clockwork
 
 Any suggestion about these specifications is welcome.
 

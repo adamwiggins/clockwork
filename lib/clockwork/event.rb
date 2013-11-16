@@ -40,7 +40,7 @@ module Clockwork
         if @manager.thread_available?
           Thread.new { execute }
         else
-          log_error "Threads exhausted; skipping #{self}"
+          @manager.log_error "Threads exhausted; skipping #{self}"
         end
       else
         execute
@@ -50,18 +50,8 @@ module Clockwork
     def execute
       @block.call(@job, @last)
     rescue => e
-      log_error e
-      handle_error e
-    end
-
-    def log_error(e)
-      @manager.config[:logger].error(e)
-    end
-
-    def handle_error(e)
-      if handler = @manager.get_error_handler
-        handler.call(e)
-      end
+      @manager.log_error e
+      @manager.handle_error e
     end
   end
 end
