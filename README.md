@@ -301,7 +301,8 @@ end
 ```
 
 In addition, Clockwork also supports `:before_tick` and `after_tick` callbacks.
-They are optional, and run when any event is run:
+They are optional, and run every tick (a tick being whatever your `:sleep_timeout`
+is set to, default is 1 second):
 
 ```ruby
 on(:before_tick) do
