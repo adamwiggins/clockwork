@@ -14,4 +14,12 @@ module Clockwork
   every(1.day, 'custom.event.handler', :at => '00:30') do
     puts 'This event has its own handler'
   end
+
+  on(:before_tick) do
+    puts "tick"
+  end
+
+  on(:after_tick) do
+    puts "tock"
+  end
 end
