@@ -76,7 +76,7 @@ job queueing system, such as
 simple clock process with no locks, but also offers near infinite horizontal
 scalability.
 
-For example, if you're using Beanstalk/Staker:
+For example, if you're using Beanstalk/Stalker:
 
 ```ruby
 require 'stalker'
@@ -108,7 +108,17 @@ Parameters
 
 ### :at
 
-`:at` parameter the hour and minute specifies when the event occur.
+`:at` parameter specifies when to trigger the event:
+
+#### Valid formats:
+
+    HH:MM
+     H:MM
+    **:MM
+    HH:**
+    (Mon|mon|Monday|monday) HH:MM
+
+#### Examples
 
 The simplest example:
 
@@ -116,13 +126,13 @@ The simplest example:
 every(1.day, 'reminders.send', :at => '01:30')
 ```
 
-You can omit 0 of the hour:
+You can omit the leading 0 of the hour:
 
 ```ruby
 every(1.day, 'reminders.send', :at => '1:30')
 ```
 
-The wildcard for hour and minute is supported:
+Wildcards for hour and minute are supported:
 
 ```ruby
 every(1.hour, 'reminders.send', :at => '**:30')
@@ -132,7 +142,7 @@ every(10.seconds, 'frequent.job', :at => '9:**')
 You can set more than one timing:
 
 ```ruby
-every(1.hour, 'reminders.send', :at => ['12:00', '18:00'])
+every(1.day, 'reminders.send', :at => ['12:00', '18:00'])
 # send reminders at noon and evening
 ```
 
@@ -142,7 +152,9 @@ You can specify the day of week to run:
 every(1.week, 'myjob', :at => 'Monday 16:20')
 ```
 
-You can also specify a timezone (default is the local timezone):
+### :tz
+
+`:tz` parameter lets you specify a timezone (default is the local timezone):
 
 ```ruby
 every(1.day, 'reminders.send', :at => '00:00', :tz => 'UTC')
@@ -173,32 +185,31 @@ Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
 
 A handler with `:thread` parameter runs in a different thread.
 
-If a job is long running or IO-intensive, this option will be useful to keep the clock precise.
+If a job is long-running or IO-intensive, this option helps keep the clock precise.
 
 Configuration
 -----------------------
 
-Clockwork exposes a couple of configuration options you may change:
+Clockwork exposes a couple of configuration options:
 
 ### :logger
 
-By default Clockwork logs to STDOUT. In case you prefer to make it to use our
+By default Clockwork logs to `STDOUT`. In case you prefer your
 own logger implementation you have to specify the `logger` configuration option. See example below.
 
 ### :sleep_timeout
 
-Clockwork wakes up once a second (by default) and performs its duties. If that
-is the rare case you need to tweak the number of seconds it sleeps then you have
-the `sleep_timeout` configuration option to set like shown below.
+Clockwork wakes up once a second and performs its duties. To change the number of seconds Clockwork
+sleeps, set the `sleep_timeout` configuration option as shown below in the example.
 
 ### :tz
 
 This is the default timezone to use for all events.  When not specified this defaults to the local
-timezone.  Specifying :tz in the the parameters for an event overrides anything set here.
+timezone.  Specifying :tz in the parameters for an event overrides anything set here.
 
 ### :max_threads
 
-Clockwork runs handlers in threads. If it exceeds `max_threads`, it will warn you about missing
+Clockwork runs handlers in threads. If it exceeds `max_threads`, it will warn you (log an error) about missing
 jobs.
 
 ### Configuration example
@@ -237,7 +248,7 @@ Old style
 ---------
 
 `include Clockwork` is old style.
-That is still supported, but not recommended, because it taint global namespace.
+The old style is still supported, though not recommended, because it pollutes the global namespace.
 
 
 
@@ -246,8 +257,7 @@ Anatomy of a clock file
 
 clock.rb is standard Ruby.  Since we include the Clockwork module (the
 clockwork binary does this automatically, or you can do it explicitly), this
-exposes a small DSL ("handler" and "every") to define the handler for events,
-and then the events themselves.
+exposes a small DSL to define the handler for events, and then the events themselves.
 
 The handler typically looks like this:
 
@@ -259,7 +269,7 @@ This block will be invoked every time an event is triggered, with the job name
 passed in.  In most cases, you should be able to pass the job name directly
 through to your queueing system.
 
-The second part of the file are the events, which roughly resembles a crontab:
+The second part of the file, which lists the events, roughly resembles a crontab:
 
 ```ruby
 every(5.minutes, 'thing.do')
@@ -286,7 +296,7 @@ You can also use blocks to do more complex checks:
 
 ```ruby
 every(1.day, 'check.leap.year') do
-  Stalker.enqueue('leap.year.party') if Time.now.year % 4 == 0
+  Stalker.enqueue('leap.year.party') if Date.leap?(Time.now.year)
 end
 ```
 
@@ -307,9 +317,9 @@ running the same way you keep your web and workers running.
 Daemonization
 -------------
 
-Thanks to @fddayan, `clockworkd` executes clockwork script in as a daemon.
+Thanks to @fddayan, `clockworkd` executes clockwork script as a daemon.
 
-You need `daemons` gem to use `clockworkd`.  It is not automatically installed, please install by yourself.
+You will need the `daemons` gem to use `clockworkd`.  It is not automatically installed, please install by yourself.
 
 Then,
 
@@ -322,15 +332,15 @@ For more details, see help shown by `clockworkd`.
 Issues and Pull requests
 ------------------------
 
-Let us know bugs you found as an issue from [Issues · tomykaira/clockwork](https://github.com/tomykaira/clockwork/issues).
+If you find a bug, please create an issue - [Issues · tomykaira/clockwork](https://github.com/tomykaira/clockwork/issues).
 
 For a bug fix or a feature request, please send a pull-request.
 Do not forget to add tests to show how your feature works, or what bug is fixed.
 All existing tests and new tests must pass (TravisCI is watching).
 
 We want to provide simple and customizable core, so superficial changes will not be merged (e.g. supporting new event registration style).
-In most case, directly operating `Manager` realizes an idea, without touching the core.
-If you get up with a new usage, please create a gist page or an article on your website, then add to the following "Use cases" section.
+In most cases, directly operating `Manager` realizes an idea, without touching the core.
+If you discover a new way to use Clockwork, please create a gist page or an article on your website, then add it to the following "Use cases" section.
 This tool is already used in various environment, so backward-incompatible requests will be mostly rejected.
 
 Use cases
