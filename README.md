@@ -300,6 +300,19 @@ every(1.day, 'check.leap.year') do
 end
 ```
 
+In addition, Clockwork also supports `:before_tick` and `after_tick` callbacks.
+They are optional, and run when any event is run:
+
+```ruby
+on(:before_tick) do
+  puts "tick"
+end
+
+on(:after_tick) do
+  puts "tock"
+end
+```
+
 In production
 -------------
 
