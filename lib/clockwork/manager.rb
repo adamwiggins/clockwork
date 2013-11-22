@@ -88,7 +88,7 @@ module Clockwork
     private
     def events_to_run(t)
       @events.select do |event|
-        event.time?(t)
+        event.run_now?(t)
       end
     end
 

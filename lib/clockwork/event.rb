@@ -20,7 +20,7 @@ module Clockwork
       @timezone ? t.in_time_zone(@timezone) : t
     end
 
-    def time?(t)
+    def run_now?(t)
       t = convert_timezone(t)
       elapsed_ready(t) and (@at.nil? or @at.ready?(t)) and (@if.nil? or @if.call(t))
     end
