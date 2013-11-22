@@ -15,11 +15,14 @@ module Clockwork
     puts 'This event has its own handler'
   end
 
+  # note: callbacks that return nil or false will cause event to not run
   on(:before_tick) do
     puts "tick"
+    true
   end
 
   on(:after_tick) do
     puts "tock"
+    true
   end
 end
