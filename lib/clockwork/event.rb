@@ -33,9 +33,7 @@ module Clockwork
     end
 
     def run(t)
-      t = convert_timezone(t)
-      @last = t
-
+      @last = convert_timezone(t)
       if thread?
         if @manager.thread_available?
           Thread.new { execute }
