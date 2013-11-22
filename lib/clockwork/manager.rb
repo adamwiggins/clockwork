@@ -102,10 +102,8 @@ module Clockwork
       if options[:if] && !options[:if].respond_to?(:call)
         raise ArgumentError.new(':if expects a callable object, but #{options[:if]} does not respond to call')
       end
-
       options[:thread] = options.fetch(:thread, config[:thread])
-      options[:tz] ||= config[:tz]
-
+      options[:tz] = options.fetch(:tz, config[:tz])
       options
     end
 

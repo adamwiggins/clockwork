@@ -173,6 +173,10 @@ class ManagerTest < Test::Unit::TestCase
   end
 
   describe ':tz option' do
+    test "time zone is not set by default" do
+      assert @manager.config[:tz].nil?
+    end
+
     test "should be able to specify a different timezone than local" do
       @manager.every(1.day, 'myjob', :at => '10:00', :tz => 'UTC')
 
