@@ -99,10 +99,8 @@ module Clockwork
     end
 
     def parse_event_option(options)
-      if options[:if]
-        if !options[:if].respond_to?(:call)
-          raise ArgumentError.new(':if expects a callable object, but #{options[:if]} does not respond to call')
-        end
+      if options[:if] && !options[:if].respond_to?(:call)
+        raise ArgumentError.new(':if expects a callable object, but #{options[:if]} does not respond to call')
       end
 
       options[:thread] = !!(options.has_key?(:thread) ? options[:thread] : config[:thread])
