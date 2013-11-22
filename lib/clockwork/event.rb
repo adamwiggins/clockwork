@@ -3,6 +3,7 @@ module Clockwork
     attr_accessor :job, :last
 
     def initialize(manager, period, job, block, options={})
+      validate_if_option(options[:if])
       @manager = manager
       @period = period
       @job = job
@@ -57,12 +58,15 @@ module Clockwork
     end
 
     def parse_event_option(options)
-      if options[:if] && !options[:if].respond_to?(:call)
-        raise ArgumentError.new(':if expects a callable object, but #{options[:if]} does not respond to call')
-      end
       options[:thread] = options.fetch(:thread, @manager.config[:thread])
       options[:tz] = options.fetch(:tz, @manager.config[:tz])
       options
+    end
+
+    def validate_if_option(if_option)
+      if if_option && !if_option.respond_to?(:call)
+        raise ArgumentError.new(':if expects a callable object, but #{if_option} does not respond to call')
+      end
     end
   end
 end
