@@ -10,10 +10,9 @@ module Clockwork
       @at = At.parse(options[:at])
       @last = nil
       @block = block
-      new_options = parse_event_option(options)
-      @if = new_options[:if]
-      @thread = new_options[:thread]
-      @timezone = new_options[:tz]
+      @if = options[:if]
+      @thread = options.fetch(:thread, @manager.config[:thread])
+      @timezone = options.fetch(:tz, @manager.config[:tz])
     end
 
     alias_method :to_s, :job
@@ -55,12 +54,6 @@ module Clockwork
     private
     def elapsed_ready(t)
       @last.nil? || (t - @last).to_i >= @period
-    end
-
-    def parse_event_option(options)
-      options[:thread] = options.fetch(:thread, @manager.config[:thread])
-      options[:tz] = options.fetch(:tz, @manager.config[:tz])
-      options
     end
 
     def validate_if_option(if_option)
