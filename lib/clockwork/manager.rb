@@ -103,7 +103,7 @@ module Clockwork
         raise ArgumentError.new(':if expects a callable object, but #{options[:if]} does not respond to call')
       end
 
-      options[:thread] = !!(options.has_key?(:thread) ? options[:thread] : config[:thread])
+      options[:thread] = options.has_key?(:thread) ? options[:thread] : config[:thread]
       options[:tz] ||= config[:tz]
 
       options
