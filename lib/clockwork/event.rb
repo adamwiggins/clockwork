@@ -15,15 +15,6 @@ module Clockwork
       @timezone = new_options[:tz]
     end
 
-    def parse_event_option(options)
-      if options[:if] && !options[:if].respond_to?(:call)
-        raise ArgumentError.new(':if expects a callable object, but #{options[:if]} does not respond to call')
-      end
-      options[:thread] = options.fetch(:thread, @manager.config[:thread])
-      options[:tz] = options.fetch(:tz, @manager.config[:tz])
-      options
-    end
-
     alias_method :to_s, :job
 
     def convert_timezone(t)
@@ -63,6 +54,15 @@ module Clockwork
     private
     def elapsed_ready(t)
       @last.nil? || (t - @last).to_i >= @period
+    end
+
+    def parse_event_option(options)
+      if options[:if] && !options[:if].respond_to?(:call)
+        raise ArgumentError.new(':if expects a callable object, but #{options[:if]} does not respond to call')
+      end
+      options[:thread] = options.fetch(:thread, @manager.config[:thread])
+      options[:tz] = options.fetch(:tz, @manager.config[:tz])
+      options
     end
   end
 end
