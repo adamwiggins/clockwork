@@ -61,11 +61,11 @@ module Clockwork
 
     def tick(t=Time.now)
       if (fire_callbacks(:before_tick))
-        to_run = @events.select do |event|
+        events = @events.select do |event|
           event.time?(t)
         end
 
-        to_run.each do |event|
+        events.each do |event|
           if (fire_callbacks(:before_run, event, t))
             log "Triggering '#{event}'"
             event.run(t)
@@ -75,7 +75,7 @@ module Clockwork
       end
 
       fire_callbacks(:after_tick)
-      to_run
+      events
     end
 
     def log_error(e)
