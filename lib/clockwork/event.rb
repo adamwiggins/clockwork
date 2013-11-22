@@ -9,9 +9,19 @@ module Clockwork
       @at = At.parse(options[:at])
       @last = nil
       @block = block
-      @if = options[:if]
-      @thread = options[:thread]
-      @timezone = options[:tz]
+      new_options = parse_event_option(options)
+      @if = new_options[:if]
+      @thread = new_options[:thread]
+      @timezone = new_options[:tz]
+    end
+
+    def parse_event_option(options)
+      if options[:if] && !options[:if].respond_to?(:call)
+        raise ArgumentError.new(':if expects a callable object, but #{options[:if]} does not respond to call')
+      end
+      options[:thread] = options.fetch(:thread, @manager.config[:thread])
+      options[:tz] = options.fetch(:tz, @manager.config[:tz])
+      options
     end
 
     alias_method :to_s, :job

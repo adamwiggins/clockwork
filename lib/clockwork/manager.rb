@@ -91,18 +91,9 @@ module Clockwork
     end
 
     def register(period, job, block, options)
-      event = Event.new(self, period, job, block || handler, parse_event_option(options))
+      event = Event.new(self, period, job, block || handler, options)
       @events << event
       event
-    end
-
-    def parse_event_option(options)
-      if options[:if] && !options[:if].respond_to?(:call)
-        raise ArgumentError.new(':if expects a callable object, but #{options[:if]} does not respond to call')
-      end
-      options[:thread] = options.fetch(:thread, config[:thread])
-      options[:tz] = options.fetch(:tz, config[:tz])
-      options
     end
 
     def every_with_multiple_times(period, job, options={}, &block)
