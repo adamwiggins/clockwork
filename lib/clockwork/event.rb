@@ -14,9 +14,7 @@ module Clockwork
       @timezone = options[:tz]
     end
 
-    def to_s
-      @job
-    end
+    alias_method :to_s, :job
 
     def convert_timezone(t)
       @timezone ? t.in_time_zone(@timezone) : t
