@@ -64,13 +64,11 @@ module Clockwork
         events = events_to_run(t)
         events.each do |event|
           if (fire_callbacks(:before_run, event, t))
-            log "Triggering '#{event}'"
             event.run(t)
             fire_callbacks(:after_run, event, t)
           end
         end
       end
-
       fire_callbacks(:after_tick)
       events
     end
@@ -83,15 +81,15 @@ module Clockwork
       error_handler.call(e) if error_handler
     end
 
+    def log(msg)
+      config[:logger].info(msg)
+    end
+
     private
     def events_to_run(t)
       @events.select do |event|
         event.time?(t)
       end
-    end
-
-    def log(msg)
-      config[:logger].info(msg)
     end
 
     def register(period, job, block, options)

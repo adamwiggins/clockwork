@@ -33,6 +33,7 @@ module Clockwork
     end
 
     def run(t)
+      @manager.log "Triggering '#{self}'"
       @last = convert_timezone(t)
       if thread?
         if @manager.thread_available?
