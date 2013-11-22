@@ -22,8 +22,7 @@ module Clockwork
 
     def time?(t)
       t = convert_timezone(t)
-      elapsed_ready = (@last.nil? or (t - @last).to_i >= @period)
-      elapsed_ready and (@at.nil? or @at.ready?(t)) and (@if.nil? or @if.call(t))
+      elapsed_ready(t) and (@at.nil? or @at.ready?(t)) and (@if.nil? or @if.call(t))
     end
 
     def thread?
@@ -49,6 +48,11 @@ module Clockwork
     rescue => e
       @manager.log_error e
       @manager.handle_error e
+    end
+
+    private
+    def elapsed_ready(t)
+      @last.nil? || (t - @last).to_i >= @period
     end
   end
 end
