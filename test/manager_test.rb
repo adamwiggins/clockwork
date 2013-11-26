@@ -260,36 +260,6 @@ class ManagerTest < Test::Unit::TestCase
     @manager.tick(Time.now)
   end
 
-  describe "thread option" do
-    test "should not use thread by default" do
-      event = @manager.every(1.minute, 'myjob')
-      assert !event.thread?
-    end
-
-    test "should use thread if thread option is specified with truly value" do
-      event = @manager.every(1.minute, 'myjob', :thread => true)
-      assert event.thread?
-    end
-
-    test "should use thread if global thread option is set" do
-      @manager.configure do |config|
-        config[:thread] = true
-      end
-
-      event = @manager.every(1.minute, 'myjob')
-      assert event.thread?
-    end
-
-    test "should not use thread if job option overrides global option" do
-      @manager.configure do |config|
-        config[:thread] = true
-      end
-
-      event = @manager.every(1.minute, 'myjob', :thread => false)
-      assert !event.thread?
-    end
-  end
-
   describe "callbacks" do
     test "should not accept unknown callback name" do
       assert_raise(RuntimeError, "Unsupported callback unknown_callback") do
