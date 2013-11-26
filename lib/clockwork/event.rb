@@ -44,6 +44,7 @@ module Clockwork
       end
     end
 
+    private
     def execute
       @block.call(@job, @last)
     rescue => e
@@ -51,7 +52,6 @@ module Clockwork
       @manager.handle_error e
     end
 
-    private
     def elapsed_ready(t)
       @last.nil? || (t - @last).to_i >= @period
     end
