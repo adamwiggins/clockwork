@@ -27,7 +27,7 @@ module Clockwork
     end
 
     def thread?
-      !!@thread
+      @thread
     end
 
     def run(t)

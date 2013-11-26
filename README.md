@@ -103,7 +103,7 @@ every(1.hour, 'feeds.refresh') { Feed.send_later(:refresh) }
 every(1.day, 'reminders.send', :at => '01:30') { Reminder.send_later(:send_reminders) }
 ```
 
-Parameters
+Event Parameters
 ----------
 
 ### :at
@@ -183,7 +183,11 @@ Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
 
 ### :thread
 
-A handler with `:thread` parameter runs in a different thread.
+An event with `:thread => true`  runs in a different thread.
+
+```ruby
+Clockwork.every(1.day, 'run.me.in.new.thread', :thread => true)
+```
 
 If a job is long-running or IO-intensive, this option helps keep the clock precise.
 
@@ -212,6 +216,11 @@ timezone.  Specifying :tz in the parameters for an event overrides anything set 
 Clockwork runs handlers in threads. If it exceeds `max_threads`, it will warn you (log an error) about missing
 jobs.
 
+
+### :thread
+
+Boolean true or false. Default is false. If set to true, every event will be run in its own thread. Can be overridden on a per event basis (see the ```:thread``` option in the Event Parameters section above)
+
 ### Configuration example
 
 ```ruby
@@ -221,6 +230,7 @@ module Clockwork
     config[:logger] = Logger.new(log_file_path)
     config[:tz] = 'EST'
     config[:max_threads] = 15
+    config[:thread] = true
   end
 end
 ```
