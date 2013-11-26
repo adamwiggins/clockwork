@@ -61,21 +61,16 @@ module Clockwork
 
     def tick(t=Time.now)
       if (fire_callbacks(:before_tick))
-        to_run = @events.select do |event|
-          event.time?(t)
-        end
-
-        to_run.each do |event|
+        events = events_to_run(t)
+        events.each do |event|
           if (fire_callbacks(:before_run, event, t))
-            log "Triggering '#{event}'"
             event.run(t)
             fire_callbacks(:after_run, event, t)
           end
         end
       end
-
       fire_callbacks(:after_tick)
-      to_run
+      events
     end
 
     def log_error(e)
@@ -86,28 +81,19 @@ module Clockwork
       error_handler.call(e) if error_handler
     end
 
-    private
     def log(msg)
       config[:logger].info(msg)
     end
 
-    def register(period, job, block, options)
-      event = Event.new(self, period, job, block || handler, parse_event_option(options))
-      @events << event
-      event
+    private
+    def events_to_run(t)
+      @events.select{ |event| event.run_now?(t) }
     end
 
-    def parse_event_option(options)
-      if options[:if]
-        if !options[:if].respond_to?(:call)
-          raise ArgumentError.new(':if expects a callable object, but #{options[:if]} does not respond to call')
-        end
-      end
-
-      options[:thread] = !!(options.has_key?(:thread) ? options[:thread] : config[:thread])
-      options[:tz] ||= config[:tz]
-
-      options
+    def register(period, job, block, options)
+      event = Event.new(self, period, job, block || handler, options)
+      @events << event
+      event
     end
 
     def every_with_multiple_times(period, job, options={}, &block)

@@ -3,6 +3,7 @@ module Clockwork
     attr_accessor :job, :last
 
     def initialize(manager, period, job, block, options={})
+      validate_if_option(options[:if])
       @manager = manager
       @period = period
       @job = job
@@ -10,22 +11,19 @@ module Clockwork
       @last = nil
       @block = block
       @if = options[:if]
-      @thread = options[:thread]
-      @timezone = options[:tz]
+      @thread = options.fetch(:thread, @manager.config[:thread])
+      @timezone = options.fetch(:tz, @manager.config[:tz])
     end
 
-    def to_s
-      @job
-    end
+    alias_method :to_s, :job
 
     def convert_timezone(t)
       @timezone ? t.in_time_zone(@timezone) : t
     end
 
-    def time?(t)
+    def run_now?(t)
       t = convert_timezone(t)
-      elapsed_ready = (@last.nil? or (t - @last).to_i >= @period)
-      elapsed_ready and (@at.nil? or @at.ready?(t)) and (@if.nil? or @if.call(t))
+      elapsed_ready(t) and (@at.nil? or @at.ready?(t)) and (@if.nil? or @if.call(t))
     end
 
     def thread?
@@ -33,9 +31,8 @@ module Clockwork
     end
 
     def run(t)
-      t = convert_timezone(t)
-      @last = t
-
+      @manager.log "Triggering '#{self}'"
+      @last = convert_timezone(t)
       if thread?
         if @manager.thread_available?
           Thread.new { execute }
@@ -47,11 +44,22 @@ module Clockwork
       end
     end
 
+    private
     def execute
       @block.call(@job, @last)
     rescue => e
       @manager.log_error e
       @manager.handle_error e
+    end
+
+    def elapsed_ready(t)
+      @last.nil? || (t - @last).to_i >= @period
+    end
+
+    def validate_if_option(if_option)
+      if if_option && !if_option.respond_to?(:call)
+        raise ArgumentError.new(':if expects a callable object, but #{if_option} does not respond to call')
+      end
     end
   end
 end
