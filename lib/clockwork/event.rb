@@ -6,7 +6,7 @@ module Clockwork
       validate_if_option(options[:if])
       @manager = manager
       @period = period
-      @job = job
+      @job = job.to_s
       @at = At.parse(options[:at])
       @last = nil
       @block = block
