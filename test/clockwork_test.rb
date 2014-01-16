@@ -34,6 +34,19 @@ class ClockworkTest < Test::Unit::TestCase
     assert string_io.string.include?('Triggering')
   end
 
+  test 'should log event correctly' do
+    run = false
+    string_io = set_string_io_logger
+    Clockwork.handler do |job|
+      run = job == :myjob
+    end
+    Clockwork.every(1.minute, :myjob)
+    Clockwork.manager.expects(:loop).yields.then.returns
+    Clockwork.run
+    assert run
+    assert string_io.string.include?("Triggering 'myjob'")
+  end
+
   test 'should not run anything after reset' do
     Clockwork.every(1.minute, 'myjob') {  }
     Clockwork.clear!
