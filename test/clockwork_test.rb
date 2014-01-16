@@ -38,7 +38,7 @@ class ClockworkTest < Test::Unit::TestCase
     run = false
     string_io = set_string_io_logger
     Clockwork.handler do |job|
-      run = job == :myjob
+      run = job == 'myjob'
     end
     Clockwork.every(1.minute, :myjob)
     Clockwork.manager.expects(:loop).yields.then.returns

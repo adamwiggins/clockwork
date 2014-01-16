@@ -6,7 +6,7 @@ module Clockwork
       validate_if_option(options[:if])
       @manager = manager
       @period = period
-      @job = job
+      @job = job.to_s
       @at = At.parse(options[:at])
       @last = nil
       @block = block
@@ -31,7 +31,7 @@ module Clockwork
     end
 
     def run(t)
-      @manager.log "Triggering '#{self.to_s}'"
+      @manager.log "Triggering '#{self}'"
       @last = convert_timezone(t)
       if thread?
         if @manager.thread_available?
