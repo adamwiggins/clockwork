@@ -6,7 +6,7 @@ module Clockwork
       validate_if_option(options[:if])
       @manager = manager
       @period = period
-      @job = job.to_s
+      @job = job
       @at = At.parse(options[:at])
       @last = nil
       @block = block
@@ -14,8 +14,6 @@ module Clockwork
       @thread = options.fetch(:thread, @manager.config[:thread])
       @timezone = options.fetch(:tz, @manager.config[:tz])
     end
-
-    alias_method :to_s, :job
 
     def convert_timezone(t)
       @timezone ? t.in_time_zone(@timezone) : t
@@ -42,6 +40,10 @@ module Clockwork
       else
         execute
       end
+    end
+
+    def to_s
+      job.to_s
     end
 
     private
