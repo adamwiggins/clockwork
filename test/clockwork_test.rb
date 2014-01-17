@@ -38,16 +38,16 @@ class ClockworkTest < Test::Unit::TestCase
     run = false
     string_io = set_string_io_logger
     Clockwork.handler do |job|
-      run = job == :myjob
+      run = job == 'an event'
     end
-    Clockwork.every(1.minute, :myjob)
+    Clockwork.every(1.minute, 'an event')
     Clockwork.manager.expects(:loop).yields.then.returns
     Clockwork.run
     assert run
-    assert string_io.string.include?("Triggering 'myjob'")
+    assert string_io.string.include?("Triggering 'an event'")
   end
 
-  test 'should pass event as is to handler' do
+  test 'should pass event without modification to handler' do
     event_object = Object.new
     run = false
     string_io = set_string_io_logger
