@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.test_files    = s.files.grep(%r{^(test|spec|features)/})
   s.require_paths = ["lib"]
 
-  s.add_dependency(%q<tzinfo>, ["~> 0.3.35"])
+  s.add_dependency(%q<tzinfo>)
   s.add_dependency(%q<activesupport>)
 
   s.add_development_dependency "bundler", "~> 1.3"
