@@ -4,6 +4,7 @@ require 'active_support/time'
 require 'clockwork/at'
 require 'clockwork/event'
 require 'clockwork/manager'
+require 'clockwork/manager_with_database_tasks'
 
 module Clockwork
   class << self
@@ -13,7 +14,7 @@ module Clockwork
     end
 
     def manager
-      @manager ||= Manager.new
+      @manager ||= ManagerWithDatabaseTasks.new
     end
 
     def manager=(manager)
@@ -40,6 +41,10 @@ module Clockwork
 
     def every(period, job, options={}, &block)
       Clockwork.manager.every(period, job, options, &block)
+    end
+
+    def sync_database_tasks(options={}, &block)
+      Clockwork.manager.sync_database_tasks(options, &block)
     end
 
     def run
