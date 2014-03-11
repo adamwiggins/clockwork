@@ -4,7 +4,6 @@ require 'active_support/time'
 require 'clockwork/at'
 require 'clockwork/event'
 require 'clockwork/manager'
-require 'clockwork/manager_with_database_tasks'
 
 module Clockwork
   class << self

@@ -1,4 +1,5 @@
 require File.expand_path('../../lib/clockwork', __FILE__)
+require 'clockwork/manager_with_database_tasks'
 require 'rubygems'
 require 'contest'
 require 'mocha/setup'
