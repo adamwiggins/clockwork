@@ -1,4 +1,13 @@
 module Clockwork
+
+  module Methods
+    def sync_database_tasks(options={}, &block)
+      Clockwork.manager.sync_database_tasks(options, &block)
+    end
+  end
+
+  extend Methods
+
   class ManagerWithDatabaseTasks < Manager
 
     SECOND_TO_RUN_DATABASE_SYNC_AT = 0

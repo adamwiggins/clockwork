@@ -117,6 +117,9 @@ require_relative './config/environment'
  
 module Clockwork
 
+  # required to enable database syncing support
+  Clockwork.manager = ManagerWithDatabaseTasks.new
+
   sync_database_tasks model: MyScheduledTask, every: 1.minute do |instance_job_name|
     # Where your model will acts as a worker:
     id = instance_job_name.split(':').last

@@ -14,7 +14,7 @@ module Clockwork
     end
 
     def manager
-      @manager ||= ManagerWithDatabaseTasks.new
+      @manager ||= Manager.new
     end
 
     def manager=(manager)
@@ -41,10 +41,6 @@ module Clockwork
 
     def every(period, job, options={}, &block)
       Clockwork.manager.every(period, job, options, &block)
-    end
-
-    def sync_database_tasks(options={}, &block)
-      Clockwork.manager.sync_database_tasks(options, &block)
     end
 
     def run
