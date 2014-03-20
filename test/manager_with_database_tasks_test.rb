@@ -133,15 +133,15 @@ class ManagerWithDatabaseTasksTest < Test::Unit::TestCase
       tick_at(@next_minute, :and_every_second_for => 66.seconds)
 
       # task1 runs at: 1, 11, 21, 31, 41, 51 (6 runs)
-      # database tasks are reloaded at: 60    
+      # database tasks are reloaded at: 60
       # task1_modified runs at: 61 (next tick after reload) and then 66 (2 runs)
       assert_equal 8, @tasks_run.length
     end
 
-    # Catch a bug caused by allowing database tasks to be run in the same clock cycle that the database 
-    # sync occurs. When this happens, a previously scheduled database task will be scheduled to run, 
-    # we then fetch the same task afresh (wiping out the @events_from_database object), but the 
-    # previously scheduled task still runs because #task `events` variable already stored it *before* 
+    # Catch a bug caused by allowing database tasks to be run in the same clock cycle that the database
+    # sync occurs. When this happens, a previously scheduled database task will be scheduled to run,
+    # we then fetch the same task afresh (wiping out the @events_from_database object), but the
+    # previously scheduled task still runs because #task `events` variable already stored it *before*
     # we wiped out the @events_from_database objects.
     #
     # We have a situation like this:
@@ -187,5 +187,4 @@ class ManagerWithDatabaseTasksTest < Test::Unit::TestCase
       assert_equal ["ScheduledTask:1", "ScheduledTaskType2:1"], @tasks_run
     end
   end
-
 end

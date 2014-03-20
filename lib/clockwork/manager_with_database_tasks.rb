@@ -24,12 +24,11 @@ module Clockwork
      	end
       raise ArgumentError.new(":every must be greater or equal to 1.minute") if options[:every] < 1.minute
 
-     	
      	model = options[:model]
      	frequency = options[:every]
       sync_task_id = get_sync_task_id
 
-      # Prevent database tasks from running in same cycle as the database sync, 
+      # Prevent database tasks from running in same cycle as the database sync,
       # as this can lead to the same task being run twice
       options_to_run_database_sync_in_own_cycle  = { :if => lambda { |t| t.sec == SECOND_TO_RUN_DATABASE_SYNC_AT } }
 
@@ -43,7 +42,7 @@ module Clockwork
     protected
 
     # sync_task_id's are used to group the database events from a particular sync_database_tasks call
-    # This method hands out the ids, incrementing the id to keep them unique. 
+    # This method hands out the ids, incrementing the id to keep them unique.
     def get_sync_task_id
       current_sync_task_id = @next_sync_database_tasks_identifier
       @next_sync_database_tasks_identifier += 1
@@ -62,10 +61,10 @@ module Clockwork
         # *before* we then delete all database tasks. This causes the task to be run at HH:00 (previous copy)
         # and at HH:01 (newly fetched copy).
         option_to_prevent_database_tasks_running_in_same_cycle_as_sync = { :if => lambda{|t| t.sec != SECOND_TO_RUN_DATABASE_SYNC_AT } }
-	      every db_task.frequency, 
-              db_task.name, 
-              options.merge(option_to_prevent_database_tasks_running_in_same_cycle_as_sync), 
-              &block
+	      every db_task.frequency,
+        db_task.name,
+        options.merge(option_to_prevent_database_tasks_running_in_same_cycle_as_sync),
+        &block
 	    end
     end
 
