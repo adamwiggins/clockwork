@@ -8,14 +8,71 @@ module Clockwork
 
   extend Methods
 
-  class ManagerWithDatabaseTasks < Manager
+  class DatabaseEventSyncPerformer
 
-    SECOND_TO_RUN_DATABASE_SYNC_AT = 0
+    def initialize(manager, model, proc)
+      @manager = manager
+      @model = model
+      @block = proc
+      @events = {}
+    end
+
+    # Ensure clockwork events reflect database tasks
+    # Adds any new tasks, modifies updated ones, and delets removed ones
+    def sync
+      model_ids_that_exist = []
+
+      @model.all.each do |db_task|
+        model_ids_that_exist << db_task.id
+        
+        if !event_exists_for_task(db_task) || db_task_has_changed(db_task)
+          create_event_for_database_task(db_task)
+        end
+      end
+
+      remove_deleted_database_tasks(model_ids_that_exist)
+    end
+
+    def events
+      @events.values
+    end
+
+    def add_event(e, task_id)
+      @events[task_id] = e
+    end
+
+    protected
+
+      def create_event_for_database_task(db_task)
+        options = { 
+          :from_database => true, 
+          :db_task_id =>  db_task.id,
+          :performer => self,
+          :at => db_task.at.blank? ? nil : db_task.at.split(',')
+        }
+
+        @manager.every db_task.frequency, db_task.name, options, &@block
+      end
+
+      def event_exists_for_task(db_task)
+        @events[db_task.id]
+      end
+
+      def remove_deleted_database_tasks(model_ids_that_exist)
+        @events.reject!{|db_task_id, _| !model_ids_that_exist.include?(db_task_id) }
+      end
+
+      def db_task_has_changed(task)
+        event = @events[task.id]
+        task.name != event.job || task.frequency != event.instance_variable_get(:@period)
+      end
+  end
+
+  class ManagerWithDatabaseTasks < Manager
 
     def initialize
       super
-      @events_from_database = []
-      @next_sync_database_tasks_identifier = 0
+      @database_event_sync_performers = []
     end
 
     def sync_database_tasks(options={}, &block)
@@ -24,64 +81,33 @@ module Clockwork
       end
       raise ArgumentError.new(":every must be greater or equal to 1.minute") if options[:every] < 1.minute
 
-      model = options[:model]
-      frequency = options[:every]
-      sync_task_id = get_sync_task_id
-
-      # Prevent database tasks from running in same cycle as the database sync,
-      # as this can lead to the same task being run twice
-      options_to_run_database_sync_in_own_cycle  = { :if => lambda { |t| t.sec == SECOND_TO_RUN_DATABASE_SYNC_AT } }
+      sync_performer = DatabaseEventSyncPerformer.new(self, options[:model], block)
+      @database_event_sync_performers << sync_performer
 
       # create event that syncs clockwork events with database events
-      every frequency, "sync_database_tasks_for_model_#{model}", options_to_run_database_sync_in_own_cycle do
-        reload_events_from_database sync_task_id, model, &block
-      end
-    end
-
-
-    protected
-
-    # sync_task_id's are used to group the database events from a particular sync_database_tasks call
-    # This method hands out the ids, incrementing the id to keep them unique.
-    def get_sync_task_id
-      current_sync_task_id = @next_sync_database_tasks_identifier
-      @next_sync_database_tasks_identifier += 1
-      current_sync_task_id
-    end
-
-    def reload_events_from_database(sync_task_id, model, &block)
-      @events_from_database[sync_task_id] = []
-
-      model.all.each do |db_task|
-        options = { from_database: true, :sync_task_id => sync_task_id }
-        options[:at] = db_task.at.split(',') unless db_task.at.blank?
-
-        # If database tasks can be scheduled in same clock cycle that database syncs occur
-        # then previous copy of database sync task will be stored and set to run (in #tick events variable)
-        # *before* we then delete all database tasks. This causes the task to be run at HH:00 (previous copy)
-        # and at HH:01 (newly fetched copy).
-        option_to_prevent_database_tasks_running_in_same_cycle_as_sync = { :if => lambda{|t| t.sec != SECOND_TO_RUN_DATABASE_SYNC_AT } }
-        every db_task.frequency,
-        db_task.name,
-        options.merge(option_to_prevent_database_tasks_running_in_same_cycle_as_sync),
-        &block
+      every options[:every], "sync_database_tasks_for_model_#{options[:model]}" do
+        sync_performer.sync
       end
     end
 
     private
 
+    def events_from_database_as_array
+      @database_event_sync_performers.collect{|performer| performer.events}.flatten
+    end
+
     def events_to_run(t)
-      (@events + @events_from_database.flatten).select{|event| event.run_now?(t) }
+      (@events + events_from_database_as_array).select{|event| event.run_now?(t) }
     end
 
     def register(period, job, block, options)
-      event = Event.new(self, period, job, block || handler, options)
-      if options[:from_database]
-        @events_from_database[options[:sync_task_id]] << event
-      else
-        @events << event
+      Event.new(self, period, job, block || handler, options).tap do |e|
+        if options[:from_database]
+          options[:performer].add_event(e, options[:db_task_id])
+        else
+          @events << e
+        end
       end
-      event
     end
   end
 end
