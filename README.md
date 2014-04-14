@@ -136,7 +136,7 @@ module Clockwork
 end
 ```
 
-This tells clockwork to fetch all MyScheduledTask instances from the database, and create an event for each, configured based on the instances' `frequency`, `name`, and `at` methods. It also says to reload the tasks from the database every 1.minute - we need to frequently do this as they could have changed (but you can choose a sensible reload frequency by changing the `every:` option). Note that the database sync event will always run on the minute-boundary (i.e. HH:MM::00), and that events which have been synced from the database won't be run in that same clock cycle (this prevents a task from the database being run twice).
+This tells clockwork to fetch all MyScheduledTask instances from the database, and create an event for each, configured based on the instances' `frequency`, `name`, and `at` methods. It also says to reload the tasks from the database every 1.minute - we need to frequently do this as they could have changed (but you can choose a sensible reload frequency by changing the `every:` option).
 
 Rails ActiveRecord models are a perfect candidate for the model class, but you could use something else. The only requirements are:
 
@@ -144,7 +144,7 @@ Rails ActiveRecord models are a perfect candidate for the model class, but you c
   2. the instances returned respond to:
       `frequency` returning the how frequently (in seconds) the database task should be run
       `name` returning the task's job name (this is what gets passed into the block above)
-      `at` return nil or '' if not using :at, or any acceptable clockwork :at string
+      `at` return nil or `''` if not using `:at`, or otherwise any acceptable clockwork `:at` string
 
 Here's an example of one way of setting up your ActiveRecord models, using Sidekiq for background tasks, and making the model class a worker:
 

@@ -56,135 +56,160 @@ class ManagerWithDatabaseTasksTest < Test::Unit::TestCase
       end
     end
 
-    setup do
-      @tasks_run = []
-      @scheduled_task1 = stub(:frequency => 10, :name => 'ScheduledTask:1', :at => nil)
-      @scheduled_task2 = stub(:frequency => 10, :name => 'ScheduledTask:2', :at => nil)
-      @scheduled_task1_modified = stub(:frequency => 5, :name => 'ScheduledTaskModified:1', :at => nil)
-      ScheduledTask.stubs(:all).returns([@scheduled_task1])
+    context "when database reload frequency is greater than task frequency period" do
+      setup do
+        @tasks_run = []
+        @scheduled_task1 = stub(:frequency => 10, :name => 'ScheduledTask:1', :at => nil, :id => 1)
+        @scheduled_task2 = stub(:frequency => 10, :name => 'ScheduledTask:2', :at => nil, :id => 2)
+        @scheduled_task1_modified = stub(:frequency => 5, :name => 'ScheduledTaskModified:1', :at => nil, :id => 3)
+        ScheduledTask.stubs(:all).returns([@scheduled_task1])
 
-      @database_reload_frequency = 1.minute
+        @database_reload_frequency = 1.minute
 
-      @now = Time.now
-      @next_minute = next_minute(@now) # database sync task only happens on minute boundary
+        @now = Time.now
 
-      # setup the database sync
-      @manager.sync_database_tasks model: ScheduledTask, every: @database_reload_frequency do |job_name|
-        @tasks_run << job_name
+        # setup the database sync
+        @manager.sync_database_tasks model: ScheduledTask, every: @database_reload_frequency do |job_name|
+          @tasks_run << job_name
+        end
+      end
+
+      def test_fetches_and_registers_database_task
+        tick_at(@now, :and_every_second_for => 1.second)
+        assert_equal ["ScheduledTask:1"], @tasks_run
+      end
+
+      def test_multiple_database_tasks_can_be_registered
+        ScheduledTask.stubs(:all).returns([@scheduled_task1, @scheduled_task2])
+        tick_at(@now, :and_every_second_for => 1.second)
+        assert_equal ["ScheduledTask:1", "ScheduledTask:2"], @tasks_run
+      end
+
+      def test_database_task_does_not_run_again_before_frequency_specified_in_database
+        tick_at(@now, :and_every_second_for => @scheduled_task1.frequency - 1.second) # runs at 1
+        assert_equal 1, @tasks_run.length
+      end
+
+      def test_database_task_runs_repeatedly_with_frequency_specified_in_database
+        tick_at(@now, :and_every_second_for => (2 * @scheduled_task1.frequency) + 1.second) # runs at 1, 11, and 21
+        assert_equal 3, @tasks_run.length
+      end
+
+      def test_reloads_tasks_from_database
+        ScheduledTask.stubs(:all).returns([@scheduled_task1], [@scheduled_task2])
+        tick_at(@now, :and_every_second_for => @database_reload_frequency.seconds)
+        @manager.tick # @scheduled_task2 should run immediately on next tick (then every 10 seconds)
+
+        assert_equal [
+          "ScheduledTask:1",
+          "ScheduledTask:1",
+          "ScheduledTask:1",
+          "ScheduledTask:1",
+          "ScheduledTask:1",
+          "ScheduledTask:1",
+          "ScheduledTask:2"], @tasks_run
+      end
+
+      def test_reloaded_tasks_run_repeatedly
+        ScheduledTask.stubs(:all).returns([@scheduled_task1], [@scheduled_task2])
+        tick_at(@now, :and_every_second_for => @database_reload_frequency.seconds + 11.seconds)
+        assert_equal ["ScheduledTask:2", "ScheduledTask:2"], @tasks_run[-2..-1]
+      end
+
+      def test_reloading_task_with_modified_frequency_will_run_with_new_frequency
+        ScheduledTask.stubs(:all).returns([@scheduled_task1], [@scheduled_task1_modified])
+
+        tick_at(@now, :and_every_second_for => 66.seconds)
+
+        # task1 runs at: 1, 11, 21, 31, 41, 51 (6 runs)
+        # database tasks are reloaded at: 60
+        # task1_modified runs at: 61 (next tick after reload) and then 66 (2 runs)
+        assert_equal 8, @tasks_run.length
+      end
+
+      def test_stops_running_deleted_database_task
+        ScheduledTask.stubs(:all).returns([@scheduled_task1], [])
+        tick_at(@now, :and_every_second_for => @database_reload_frequency.seconds)
+        before = @tasks_run.dup
+
+        # tick through reload, and run for enough ticks that previous task would have run
+        tick_at(@now + @database_reload_frequency.seconds + 20.seconds)
+        after = @tasks_run
+
+        assert_equal before, after
+      end
+
+      def test_edited_tasks_switch_to_new_settings
+        tick_at @now, :and_every_second_for => @database_reload_frequency.seconds - 1.second
+        modified_task_1 = stub(:frequency => 30, :name => 'ScheduledTask:1_modified', :at => nil, :id => 1)
+        ScheduledTask.stubs(:all).returns([modified_task_1])
+        tick_at @now + @database_reload_frequency.seconds, :and_every_second_for => @database_reload_frequency.seconds - 1.seconds
+        assert_equal [
+          "ScheduledTask:1", 
+          "ScheduledTask:1", 
+          "ScheduledTask:1",
+          "ScheduledTask:1",
+          "ScheduledTask:1",
+          "ScheduledTask:1",
+          "ScheduledTask:1_modified",
+          "ScheduledTask:1_modified"
+          ], @tasks_run
+      end
+
+      def test_daily_task_with_at_should_only_run_once
+        next_minute = next_minute(@now)
+        at = next_minute.strftime('%H:%M')
+        @scheduled_task_with_at = stub(:frequency => 1.day, :name => 'ScheduledTaskWithAt:1', :at => at, :id => 5)
+        ScheduledTask.stubs(:all).returns([@scheduled_task_with_at])
+
+        # tick from now, though specified :at time
+        tick_at(@now, :and_every_second_for => (2 * @database_reload_frequency.seconds) + 1.second)
+
+        assert_equal 1, @tasks_run.length
+      end
+
+      def test_having_multiple_sync_database_tasks_will_work
+        ScheduledTask.stubs(:all).returns([@scheduled_task1])
+
+        # setup 2nd database sync
+        @scheduled_task_type2 = stub(:frequency => 10, :name => 'ScheduledTaskType2:1', :at => nil, :id => 6)
+
+        ScheduledTaskType2.stubs(:all).returns([@scheduled_task_type2])
+        @manager.sync_database_tasks model: ScheduledTaskType2, every: @database_reload_frequency do |job_name|
+          @tasks_run << job_name
+        end
+
+        tick_at(@now, :and_every_second_for => 1.second)
+
+        assert_equal ["ScheduledTask:1", "ScheduledTaskType2:1"], @tasks_run
       end
     end
 
-    def test_does_not_fetch_database_tasks_until_next_minute
-      seconds_upto_and_including_next_minute = (@next_minute - @now).seconds.to_i + 1
-      tick_at(@now, :and_every_second_for => seconds_upto_and_including_next_minute)
-      assert_equal [], @tasks_run
-    end
+    context "when database reload frequency is less than task frequency period" do
+      setup do
+        @tasks_run = []
+        @scheduled_task1 = stub(:frequency => 5.minutes, :name => 'ScheduledTask:1', :at => nil, :id => 1)
+        @scheduled_task2 = stub(:frequency => 10, :name => 'ScheduledTask:2', :at => nil, :id => 2)
+        @scheduled_task1_modified = stub(:frequency => 5, :name => 'ScheduledTaskModified:1', :at => nil)
+        ScheduledTask.stubs(:all).returns([@scheduled_task1])
 
-    def test_fetches_and_registers_database_task
-      tick_at(@next_minute, :and_every_second_for => 1.second)
-      assert_equal ["ScheduledTask:1"], @tasks_run
-    end
+        @database_reload_frequency = 1.minute
 
-    def test_multiple_database_tasks_can_be_registered
-      ScheduledTask.stubs(:all).returns([@scheduled_task1, @scheduled_task2])
-      tick_at(@next_minute, :and_every_second_for => 1.second)
-      assert_equal ["ScheduledTask:1", "ScheduledTask:2"], @tasks_run
-    end
+        @now = Time.now
+        @next_minute = next_minute(@now) # database sync task only happens on minute boundary
 
-    def test_database_task_does_not_run_again_before_frequency_specified_in_database
-      tick_at(@next_minute, :and_every_second_for => 9.seconds) # runs at 1
-      assert_equal 1, @tasks_run.length
-    end
-
-    def test_database_task_runs_repeatedly_with_frequency_specified_in_database
-      tick_at(@next_minute, :and_every_second_for => 21.seconds) # runs at 1, 11, and 21
-      assert_equal 3, @tasks_run.length
-    end
-
-    def test_reloads_tasks_from_database
-      ScheduledTask.stubs(:all).returns([@scheduled_task1], [@scheduled_task2])
-      tick_at(@next_minute, :and_every_second_for => @database_reload_frequency.seconds)
-      @manager.tick # @scheduled_task2 should run immediately on next tick (then every 10 seconds)
-
-      assert_equal "ScheduledTask:2", @tasks_run.last
-    end
-
-    def test_reloaded_tasks_run_repeatedly
-      ScheduledTask.stubs(:all).returns([@scheduled_task1], [@scheduled_task2])
-      tick_at(@next_minute, :and_every_second_for => @database_reload_frequency.seconds + 11.seconds)
-      assert_equal ["ScheduledTask:2", "ScheduledTask:2"], @tasks_run[-2..-1]
-    end
-
-    def test_stops_running_deleted_database_task
-      ScheduledTask.stubs(:all).returns([@scheduled_task1], [])
-      tick_at(@next_minute, :and_every_second_for => @database_reload_frequency.seconds)
-      before = @tasks_run.dup
-
-      # tick through reload, and run for enough ticks that previous task would have run
-      tick_at(@next_minute + @database_reload_frequency.seconds + 20.seconds)
-      after = @tasks_run
-
-      assert_equal before, after
-    end
-
-    def test_reloading_task_with_modified_frequency_will_run_with_new_frequency
-      ScheduledTask.stubs(:all).returns([@scheduled_task1], [@scheduled_task1_modified])
-
-      tick_at(@next_minute, :and_every_second_for => 66.seconds)
-
-      # task1 runs at: 1, 11, 21, 31, 41, 51 (6 runs)
-      # database tasks are reloaded at: 60
-      # task1_modified runs at: 61 (next tick after reload) and then 66 (2 runs)
-      assert_equal 8, @tasks_run.length
-    end
-
-    # Catch a bug caused by allowing database tasks to be run in the same clock cycle that the database
-    # sync occurs. When this happens, a previously scheduled database task will be scheduled to run,
-    # we then fetch the same task afresh (wiping out the @events_from_database object), but the
-    # previously scheduled task still runs because #task `events` variable already stored it *before*
-    # we wiped out the @events_from_database objects.
-    #
-    # We have a situation like this:
-    #
-    # 12:31:00    #tick loops through events to run
-    #               sync_database_tasks_for_model_ task is run
-    #                 fetches database task 1 with :at => 12:32, and schedules it to run (object task 1')
-    #
-    # ...
-    #
-    # 12:32:00    #tick loops through events that should be run, of which task 1' is included
-    #               sync_database_tasks_for_model_ task is run
-    #                 fetches database task 1 with :at => 12:32, and schedules it to run (object task 1'')
-    #               task 1' is run
-    #
-    # 12:32:01    #tick loops through events that should be run, of which task 1'' is included
-    #               task 1'' is run
-    def test_daily_task_with_at_should_not_run_twice_when_already_scheduled
-      minute_after_next = next_minute(@next_minute)
-      at = minute_after_next.strftime('%H:%M')
-      @scheduled_task_with_at = stub(:frequency => 1.day, :name => 'ScheduledTaskWithAt:1', :at => at)
-      ScheduledTask.stubs(:all).returns([@scheduled_task_with_at])
-
-      # tick from now, though specified :at time
-      tick_at(@now, :and_every_second_for => (2 * @database_reload_frequency.seconds) + 1.second)
-
-      assert_equal 1, @tasks_run.length
-    end
-
-    def test_having_multiple_sync_database_tasks_will_work
-      ScheduledTask.stubs(:all).returns([@scheduled_task1])
-
-      # setup 2nd database sync
-      @scheduled_task_type2 = stub(:frequency => 10, :name => 'ScheduledTaskType2:1', :at => nil)
-
-      ScheduledTaskType2.stubs(:all).returns([@scheduled_task_type2])
-      @manager.sync_database_tasks model: ScheduledTaskType2, every: @database_reload_frequency do |job_name|
-        @tasks_run << job_name
+        # setup the database sync
+        @manager.sync_database_tasks model: ScheduledTask, every: @database_reload_frequency do |job_name|
+          @tasks_run << job_name
+        end
       end
 
-      tick_at(@next_minute, :and_every_second_for => 1.second)
-
-      assert_equal ["ScheduledTask:1", "ScheduledTaskType2:1"], @tasks_run
+      # For example: if the manager updates every minute, but the task specifies 5 minutes, 
+      # the task will still run every minute.
+      def test_it_only_runs_the_task_once_within_the_task_frequency_period
+        tick_at(@now, :and_every_second_for => 5.minutes)
+        assert_equal 1, @tasks_run.length
+      end
     end
   end
 end
