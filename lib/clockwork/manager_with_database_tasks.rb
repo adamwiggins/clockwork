@@ -1,5 +1,14 @@
 module Clockwork
 
+  # add equality testing to At
+  class At
+    attr_reader :min, :hour, :wday
+
+    def == other
+      @min == other.min && @hour == other.hour && @wday == other.wday
+    end
+  end
+
   module Methods
     def sync_database_tasks(options={}, &block)
       Clockwork.manager.sync_database_tasks(options, &block)
@@ -64,7 +73,10 @@ module Clockwork
 
       def db_task_has_changed(task)
         event = @events[task.id]
-        task.name != event.job || task.frequency != event.instance_variable_get(:@period)
+        name_has_changed = task.name != event.job
+        frequency_has_changed = task.frequency != event.instance_variable_get(:@period)
+        at_has_changed = At.parse(task.at) != event.instance_variable_get(:@at)
+        name_has_changed || frequency_has_changed || at_has_changed
       end
   end
 

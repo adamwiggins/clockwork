@@ -19,6 +19,20 @@ class ManagerWithDatabaseTasksTest < Test::Unit::TestCase
     @manager.handler { }
   end
 
+  def assert_will_run(t)
+    if t.is_a? String
+      t = Time.parse(t)
+    end
+    assert_equal 1, @manager.tick(t).size
+  end
+
+  def assert_wont_run(t)
+    if t.is_a? String
+      t = Time.parse(t)
+    end
+    assert_equal 0, @manager.tick(t).size
+  end
+
   def tick_at(now = Time.now, options = {})
     seconds_to_tick_for = options[:and_every_second_for] || 0
     number_of_ticks = seconds_to_tick_for + 1 # add one for right now
@@ -139,21 +153,42 @@ class ManagerWithDatabaseTasksTest < Test::Unit::TestCase
         assert_equal before, after
       end
 
-      def test_edited_tasks_switch_to_new_settings
+      def test_task_with_edited_name_switches_to_new_name
         tick_at @now, :and_every_second_for => @database_reload_frequency.seconds - 1.second
+        @tasks_run = [] # clear tasks run before change
+
         modified_task_1 = stub(:frequency => 30, :name => 'ScheduledTask:1_modified', :at => nil, :id => 1)
         ScheduledTask.stubs(:all).returns([modified_task_1])
         tick_at @now + @database_reload_frequency.seconds, :and_every_second_for => @database_reload_frequency.seconds - 1.seconds
-        assert_equal [
-          "ScheduledTask:1", 
-          "ScheduledTask:1", 
-          "ScheduledTask:1",
-          "ScheduledTask:1",
-          "ScheduledTask:1",
-          "ScheduledTask:1",
-          "ScheduledTask:1_modified",
-          "ScheduledTask:1_modified"
-          ], @tasks_run
+
+        assert_equal ["ScheduledTask:1_modified", "ScheduledTask:1_modified"], @tasks_run
+      end
+
+      def test_task_with_edited_frequency_switches_to_new_frequency
+        tick_at @now, :and_every_second_for => @database_reload_frequency.seconds - 1.second
+        @tasks_run = [] # clear tasks run before change
+
+        modified_task_1 = stub(:frequency => 30, :name => 'ScheduledTask:1', :at => nil, :id => 1)
+        ScheduledTask.stubs(:all).returns([modified_task_1])
+        tick_at @now + @database_reload_frequency.seconds, :and_every_second_for => @database_reload_frequency.seconds - 1.seconds
+
+        assert_equal 2, @tasks_run.length
+      end
+
+      def test_task_with_edited_at_runs_at_new_at
+        task_1 = stub(:frequency => 1.day, :name => 'ScheduledTask:1', :at => '10:30', :id => 1)
+        ScheduledTask.stubs(:all).returns([task_1])
+
+        assert_will_run 'jan 1 2010 10:30:00'
+        assert_wont_run 'jan 1 2010 09:30:00'
+        tick_at @now, :and_every_second_for => @database_reload_frequency.seconds - 1.second
+
+        modified_task_1 = stub(:frequency => 1.day, :name => 'ScheduledTask:1', :at => '09:30', :id => 1)
+        ScheduledTask.stubs(:all).returns([modified_task_1])
+        tick_at @now + @database_reload_frequency.seconds, :and_every_second_for => @database_reload_frequency.seconds - 1.seconds
+
+        assert_will_run 'jan 1 2010 09:30:00'
+        assert_wont_run 'jan 1 2010 10:30:00'
       end
 
       def test_daily_task_with_at_should_only_run_once
