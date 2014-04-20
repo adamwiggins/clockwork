@@ -203,6 +203,21 @@ class ManagerWithDatabaseTasksTest < Test::Unit::TestCase
         assert_equal 1, @tasks_run.length
       end
 
+      def test_comma_separated_at_from_task_leads_to_multiple_event_ats
+        task = stub(:frequency => 1.day, :name => 'ScheduledTask:1', :at => '16:20, 18:10', :id => 1)
+        ScheduledTask.stubs(:all).returns([task])
+
+        tick_at @now, :and_every_second_for => @database_reload_frequency.seconds
+
+        assert_wont_run 'jan 1 2010 16:19:59'
+        assert_will_run 'jan 1 2010 16:20:00'
+        assert_wont_run 'jan 1 2010 16:20:01'
+
+        assert_wont_run 'jan 1 2010 18:09:59'
+        assert_will_run 'jan 1 2010 18:10:00'
+        assert_wont_run 'jan 1 2010 18:10:01'
+      end
+
       def test_having_multiple_sync_database_tasks_will_work
         ScheduledTask.stubs(:all).returns([@scheduled_task1])
 
@@ -239,8 +254,6 @@ class ManagerWithDatabaseTasksTest < Test::Unit::TestCase
         end
       end
 
-      # For example: if the manager updates every minute, but the task specifies 5 minutes, 
-      # the task will still run every minute.
       def test_it_only_runs_the_task_once_within_the_task_frequency_period
         tick_at(@now, :and_every_second_for => 5.minutes)
         assert_equal 1, @tasks_run.length

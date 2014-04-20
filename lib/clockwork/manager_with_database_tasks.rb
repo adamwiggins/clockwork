@@ -34,30 +34,34 @@ module Clockwork
       @model.all.each do |db_task|
         model_ids_that_exist << db_task.id
         
-        if !event_exists_for_task(db_task) || db_task_has_changed(db_task)
-          create_event_for_database_task(db_task)
+        if !event_exists_for_task(db_task) || task_has_changed(db_task)
+          recreate_event_for_database_task(db_task)
         end
       end
 
       remove_deleted_database_tasks(model_ids_that_exist)
     end
 
-    def events
-      @events.values
+    def clockwork_events
+      @events.values.flatten
     end
 
+    # store events by task_id in array (array is needed as there is 1 event per At)
     def add_event(e, task_id)
-      @events[task_id] = e
+      @events[task_id] ||= []
+      @events[task_id] << e
     end
 
     protected
 
-      def create_event_for_database_task(db_task)
+      def recreate_event_for_database_task(db_task)
+        @events[db_task.id] = nil
+
         options = { 
           :from_database => true, 
           :db_task_id =>  db_task.id,
           :performer => self,
-          :at => db_task.at.blank? ? nil : db_task.at.split(',')
+          :at => array_of_ats_for(db_task, :nil_if_empty => true)
         }
 
         @manager.every db_task.frequency, db_task.name, options, &@block
@@ -71,12 +75,33 @@ module Clockwork
         @events.reject!{|db_task_id, _| !model_ids_that_exist.include?(db_task_id) }
       end
 
-      def db_task_has_changed(task)
-        event = @events[task.id]
+      def task_has_changed(task)
+        events = @events[task.id]
+        event = @events[task.id].first # all events will have same frequency/name, just different ats
+        ats_for_task = array_of_ats_for(task)
+        ats_from_event = array_of_ats_from_event(task.id)
+
         name_has_changed = task.name != event.job
         frequency_has_changed = task.frequency != event.instance_variable_get(:@period)
-        at_has_changed = At.parse(task.at) != event.instance_variable_get(:@at)
+
+        at_has_changed = ats_for_task.length != ats_from_event.length
+        at_has_changed ||= ats_for_task.inject(false) do |memo, at|
+          memo ||= !ats_from_event.include?(At.parse(at))
+        end
+
         name_has_changed || frequency_has_changed || at_has_changed
+      end
+
+      def array_of_ats_from_event(task_id)
+        @events[task_id].collect{|clockwork_event| clockwork_event.instance_variable_get(:@at) }.compact
+      end
+
+      def array_of_ats_for(task, opts={})
+        if task.at.nil?
+          opts[:nil_if_empty] ? nil : []
+        else
+          task.at.split(',').map(&:strip)
+        end
       end
   end
 
@@ -105,7 +130,7 @@ module Clockwork
     private
 
     def events_from_database_as_array
-      @database_event_sync_performers.collect{|performer| performer.events}.flatten
+      @database_event_sync_performers.collect{|performer| performer.clockwork_events}.flatten
     end
 
     def events_to_run(t)
