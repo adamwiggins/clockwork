@@ -12,7 +12,7 @@ module Clockwork
     def self.parse(at)
       return unless at
       case at
-      when /^([[:alpha:]]+)\s(.*)$/
+      when /\A([[:alpha:]]+)\s(.*)\z/
         if wday = WDAYS[$1]
           parsed_time = parse($2)
           parsed_time.wday = wday
@@ -20,11 +20,11 @@ module Clockwork
         else
           raise FailedToParse, at
         end
-      when /^(\d{1,2}):(\d\d)$/
+      when /\A(\d{1,2}):(\d\d)\z/
         new($2.to_i, $1.to_i)
-      when /^\*{1,2}:(\d\d)$/
+      when /\A\*{1,2}:(\d\d)\z/
         new($1.to_i)
-      when /^(\d{1,2}):\*\*$/
+      when /\A(\d{1,2}):\*\*\z/
         new(NOT_SPECIFIED, $1.to_i)
       else
         raise FailedToParse, at
