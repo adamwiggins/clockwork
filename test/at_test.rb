@@ -90,4 +90,29 @@ class AtTest < Test::Unit::TestCase
       Clockwork::At.parse('32:00')
     end
   end
+
+  test 'invalid multi-line with Sat 12:00' do
+    assert_raise Clockwork::At::FailedToParse do
+      Clockwork::At.parse("sat 12:00\nreally invalid time")
+    end
+  end
+
+  test 'invalid multi-line with 8:30' do
+    assert_raise Clockwork::At::FailedToParse do
+      Clockwork::At.parse("8:30\nreally invalid time")
+    end
+  end
+
+  test 'invalid multi-line with *:10' do
+    assert_raise Clockwork::At::FailedToParse do
+      Clockwork::At.parse("*:10\nreally invalid time")
+    end
+  end
+
+  test 'invalid multi-line with 12:**' do
+    assert_raise Clockwork::At::FailedToParse do
+      Clockwork::At.parse("12:**\nreally invalid time")
+    end
+  end
+
 end
