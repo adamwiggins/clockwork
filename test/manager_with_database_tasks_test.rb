@@ -259,5 +259,34 @@ class ManagerWithDatabaseTasksTest < Test::Unit::TestCase
         assert_equal 1, @tasks_run.length
       end
     end
+
+    context "with task with :at as empty string" do
+      setup do
+        @task_with_empty_string_at = stub(:frequency => 10, :name => 'ScheduledTask:1', :at => '', :id => 1)
+        ScheduledTask.stubs(:all).returns([@task_with_empty_string_at])
+
+        @tasks_run = []
+
+        @manager.sync_database_tasks(model: ScheduledTask, every: 1.minute) do |job_name|
+          @tasks_run << job_name
+        end
+      end
+
+      def test_it_does_not_raise_an_error
+        begin
+          tick_at(Time.now, :and_every_second_for => 10.seconds)
+        rescue => e
+          assert false, "Raised an error: #{e.message}"
+        end
+      end
+
+      def test_it_runs_the_task
+        begin
+          tick_at(Time.now, :and_every_second_for => 10.seconds)
+        rescue => e
+        end
+        assert_equal 1, @tasks_run.length
+      end
+    end
   end
 end

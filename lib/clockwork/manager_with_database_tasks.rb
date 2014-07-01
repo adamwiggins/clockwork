@@ -97,7 +97,7 @@ module Clockwork
       end
 
       def array_of_ats_for(task, opts={})
-        if task.at.nil?
+        if task.at.to_s.empty?
           opts[:nil_if_empty] ? nil : []
         else
           task.at.split(',').map(&:strip)
