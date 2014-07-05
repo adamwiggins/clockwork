@@ -247,17 +247,38 @@ class ManagerTest < Test::Unit::TestCase
     end
   end
 
-  test "should warn about missing jobs upon exhausting threads" do
-    logger = Logger.new(StringIO.new)
-    @manager.configure do |config|
-      config[:max_threads] = 0
-      config[:logger] = logger
+  describe "max_threads" do
+    test "should warn when an event tries to generate threads more than max_threads" do
+      logger = Logger.new(STDOUT)
+      @manager.configure do |config|
+        config[:max_threads] = 1
+        config[:logger] = logger
+      end
+
+      @manager.every(1.minute, 'myjob1', :thread => true) { sleep 2 }
+      @manager.every(1.minute, 'myjob2', :thread => true) { sleep 2 }
+      logger.expects(:error).with("Threads exhausted; skipping myjob2")
+
+      @manager.tick(Time.now)
     end
 
-    @manager.every(1.minute, 'myjob', :thread => true)
-    logger.expects(:error).with("Threads exhausted; skipping myjob")
+    test "should not warn when thread is managed by others" do
+      begin
+        t = Thread.new { sleep 5 }
+        logger = Logger.new(StringIO.new)
+        @manager.configure do |config|
+          config[:max_threads] = 1
+          config[:logger] = logger
+        end
 
-    @manager.tick(Time.now)
+        @manager.every(1.minute, 'myjob', :thread => true)
+        logger.expects(:error).never
+
+        @manager.tick(Time.now)
+      ensure
+        t.kill
+      end
+    end
   end
 
   describe "callbacks" do

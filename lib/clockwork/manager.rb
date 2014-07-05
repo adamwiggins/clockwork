@@ -12,7 +12,7 @@ module Clockwork
     end
 
     def thread_available?
-      Thread.list.count < config[:max_threads]
+      Thread.list.select { |t| t['creator'] == self }.count < config[:max_threads]
     end
 
     def configure
