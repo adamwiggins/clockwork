@@ -49,7 +49,7 @@ module Clockwork
       job.to_s
     end
 
-    private
+    protected
     def execute
       @block.call(@job, @last)
     rescue => e
