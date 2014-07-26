@@ -115,7 +115,7 @@ require 'clockwork'
 require 'clockwork/manager_with_database_tasks'
 require_relative './config/boot'
 require_relative './config/environment'
- 
+
 module Clockwork
 
   # required to enable database syncing support
@@ -179,7 +179,7 @@ class MyScheduledTask < ActiveRecord::Base
   include Sidekiq::Worker
 
   belongs_to :frequency_period
-  attr_accessible :frequency_quantity, :frequency_period_id, :at 
+  attr_accessible :frequency_quantity, :frequency_period_id, :at
 
   # Used by clockwork to schedule how frequently this task should be run
   # Should be the intended number of seconds between executions
@@ -189,7 +189,7 @@ class MyScheduledTask < ActiveRecord::Base
 
   # Used by clockwork to name this task internally for its logging
   # Should return a reference for this task to be used in clockwork
-  # Include the instance ID if you want to be able to retrieve the 
+  # Include the instance ID if you want to be able to retrieve the
   # model instance inside the sync_database_tasks block in clock.rb
   def name
     "Database_MyScheduledTask:#{id}"
@@ -297,7 +297,11 @@ Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
 
 ### :thread
 
-An event with `:thread => true`  runs in a different thread.
+In default, clockwork runs in single-process, single-thread.
+If an event handler takes long time, the main routine of clockwork is blocked until it ends.
+Clockwork does not misbehave, but the next event is blocked, and runs when the process is returned to the clockwork routine.
+
+This `:thread` option is to avoid blocking. An event with `:thread => true`  runs in a different thread.
 
 ```ruby
 Clockwork.every(1.day, 'run.me.in.new.thread', :thread => true)
