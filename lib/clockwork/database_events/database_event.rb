@@ -13,17 +13,17 @@ module Clockwork
       job.name.to_s
     end
 
-    def name_or_frequency_has_changed?(database_event)
-      name_has_changed?(database_event) || frequency_has_changed?(database_event)
+    def name_or_frequency_has_changed?(model)
+      name_has_changed?(model) || frequency_has_changed?(model)
     end
 
     protected
-    def name_has_changed?(database_event)
-      name != database_event.name
+    def name_has_changed?(model)
+      name != model.name
     end
 
-    def frequency_has_changed?(database_event)
-      @period != database_event.frequency
+    def frequency_has_changed?(model)
+      @period != model.frequency
     end
   end
 end

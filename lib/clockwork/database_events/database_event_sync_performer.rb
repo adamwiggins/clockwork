@@ -3,100 +3,78 @@ class DatabaseEventSyncPerformer
     PERFORMERS = []
 
     def self.setup(options={}, &block)
-      model = options.fetch(:model)
+      model_class = options.fetch(:model)
       every = options.fetch(:every)
       raise ArgumentError.new(":every must be greater or equal to 1.minute") if every < 1.minute
 
-      sync_performer = DatabaseEventSyncPerformer.new(self, model, block)
+      sync_performer = DatabaseEventSyncPerformer.new(self, model_class, block)
 
-      # create event that syncs clockwork events with database events
-      Clockwork.manager.every options[:every], "sync_database_events_for_model_#{options[:model]}" do
+      # create event that syncs clockwork events with events coming from database-backed model
+      Clockwork.manager.every every, "sync_database_events_for_model_#{model_class}" do
         sync_performer.sync
       end
     end
 
-    def initialize(manager, model, proc)
+    def initialize(manager, model_class, proc)
       @manager = manager
-      @model = model
+      @model_class = model_class
       @block = proc
-      @events = {}
+      @database_event_registry = DatabaseEventRegistry.new(@manager, @block)
 
       PERFORMERS << self
     end
 
-    # Ensure clockwork events reflect database events
+    # Ensure clockwork events reflect events from database-backed model
     # Adds any new events, modifies updated ones, and delets removed ones
     def sync
       model_ids_that_exist = []
 
-      @model.all.each do |db_event|
-        model_ids_that_exist << db_event.id
-        
-        clockwork_event = clockwork_event_for(db_event)
-        recreate_clockwork_event(db_event) if !clockwork_event || has_changed?(clockwork_event, db_event)
+      @model_class.all.each do |model|
+        model_ids_that_exist << model.id
+        unless are_different?(@database_event_registry.event_for(model), model)
+          recreate_event(model)
+        end
       end
 
-      remove_deleted_db_events(model_ids_that_exist)
-    end
-
-    def register(db_event)
-      (@events[db_event.id] ||= []) << db_event
+      @database_event_registry.unregister_all_except(model_ids_that_exist)
     end
 
     protected
 
-      def has_changed?(clockwork_event, db_event)
-        clockwork_event.name_or_frequency_has_changed?(db_event) || ats_have_changed?(db_event)
+      def are_different?(event, model)
+        return true if event.nil?
+        event.name_or_frequency_has_changed?(model) || ats_have_changed?(model)
       end
 
-      def ats_have_changed?(database_event)
-        database_event_ats = array_of_ats_for(database_event)
-        clockwork_event_ats = array_of_ats_from_clockwork_event(database_event.id)
+      def ats_have_changed?(model)
+        model_ats = ats_array_for_event(model)
+        event_ats = ats_array_from_model(model)
         
-        database_event_ats.eql?(clockwork_event_ats)
+        !model_ats.eql?(event_ats)
       end
 
-      def array_of_ats_from_clockwork_event(db_event_id)
-        @events[db_event_id].collect{|clockwork_event| clockwork_event.at }.compact
+      def ats_array_for_event(model)
+        @database_event_registry[model.id].collect{|event| event.at }.compact
       end
 
-      def array_of_ats_for(database_event)
-        (at_strings_for(database_event) || []).collect{|at| At.parse(at) }
+      def ats_array_from_model(model)
+        (at_strings_for(model) || []).collect{|at| At.parse(at) }
       end
 
-      def at_strings_for(db_event, opts={})
-        db_event.at.to_s.empty? ? nil : db_event.at.split(',').map(&:strip)
+      def at_strings_for(model)
+        model.at.to_s.empty? ? nil : model.at.split(',').map(&:strip)
       end
 
-      def unregister_clockwork_events_for(db_event)
-        @events[db_event.id].each{|e| @manager.unregister(e) }
-      end
-
-      def recreate_clockwork_event(db_event)
-        unregister_clockwork_events_for(db_event)
-        @events[db_event.id] = nil
+      def recreate_event(model)
+        @database_event_registry.unregister(model)
 
         options = {
           :from_database => true,
-          :db_event_id =>  db_event.id,
           :sync_performer => self,
-          :at => at_strings_for(db_event)
+          :at => at_strings_for(model)
         }
 
-        # we pass actual db_event as the DbEvent's job, rather than just name
-        @manager.every db_event.frequency, db_event, options, &@block
-      end
-
-      # all events of same id will have same frequency/name, just different ats
-      def clockwork_event_for(db_event)
-        @events[db_event.id].first
-      end
-
-      def remove_deleted_db_events(model_ids_that_exist)
-        (@events.keys - model_ids_that_exist).each do |id|
-          unregister_clockwork_events_for(@events[id])
-        end
-
-        @events.keep_if{|db_event_id| model_ids_that_exist.include?(db_event_id) }
+        # we pass actual model instance as the DbEvent's job, rather than just name
+        @manager.every model.frequency, model, options, &@block
       end
   end
