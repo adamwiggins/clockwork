@@ -288,5 +288,45 @@ class ManagerWithDatabaseTasksTest < Test::Unit::TestCase
         assert_equal 1, @tasks_run.length
       end
     end
+
+    context "with task that respond to `tz`" do
+      setup do
+        now = Time.now.utc.strftime('%H:%M')
+        @task_with_tz = stub(:frequency => 1.days, :name => 'ScheduledTask:1', :at => now, :id => 1, :tz => 'America/Montreal')
+        ScheduledTask.stubs(:all).returns([@task_with_tz])
+
+        @tasks_run = []
+
+        @manager.sync_database_tasks(model: ScheduledTask, every: 1.minute) do |job_name|
+          @tasks_run << job_name
+        end
+      end
+
+      def test_it_does_not_raise_an_error
+        begin
+          tick_at(Time.now, :and_every_second_for => 10.seconds)
+        rescue => e
+          assert false, "Raised an error: #{e.message}"
+        end
+      end
+
+      def test_it_do_not_runs_the_task_as_utc
+        begin
+          tick_at(Time.now.utc, :and_every_second_for => 3.hours)
+        rescue => e
+        end
+        assert_equal 0, @tasks_run.length
+      end
+
+      def test_it_does_runs_the_task_as_est
+        begin
+          tick_at(Time.now.utc, :and_every_second_for => 5.hours)
+        rescue => e
+        end
+        assert_equal 1, @tasks_run.length
+      end
+
+    end
+
   end
 end
