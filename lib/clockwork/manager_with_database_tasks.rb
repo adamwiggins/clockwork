@@ -64,6 +64,10 @@ module Clockwork
           :at => array_of_ats_for(db_task, :nil_if_empty => true)
         }
 
+        if db_task.respond_to?(:tz)
+          options[:tz] = db_task.tz
+        end
+
         @manager.every db_task.frequency, db_task.name, options, &@block
       end
 
