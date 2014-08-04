@@ -13,7 +13,7 @@ module Clockwork
       end
 
       def name
-        job.name
+        (job.respond_to?(:name) && job.name) ? job.name : "#{job.class}:#{job.id}"
       end
 
       def to_s
@@ -26,7 +26,7 @@ module Clockwork
 
       protected
       def name_has_changed?(model)
-        name != model.name
+        !job.respond_to?(:name) || job.name != model.name
       end
 
       def frequency_has_changed?(model)
