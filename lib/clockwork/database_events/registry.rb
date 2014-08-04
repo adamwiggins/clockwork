@@ -33,7 +33,6 @@ module Clockwork
       def events_for(model)
         @events[model.id]
       end
-
     end
 
   end

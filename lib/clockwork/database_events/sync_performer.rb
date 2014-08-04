@@ -9,9 +9,8 @@ module Clockwork
       PERFORMERS = []
 
       def self.setup(options={}, &block)
-        model_class = options.fetch(:model) { raise KeyError, ":model must be set to the model class"}
-        every = options.fetch(:every) { raise KeyError, ":every must be set to the database sync frequency"}
-        raise ArgumentError.new(":every must be greater or equal to 1.minute") if every < 1.minute
+        model_class = options.fetch(:model) { raise KeyError, ":model must be set to the model class" }
+        every = options.fetch(:every) { raise KeyError, ":every must be set to the database sync frequency" }
 
         sync_performer = self.new(model_class, &block)
 
@@ -74,7 +73,9 @@ module Clockwork
       end
 
       def create_or_recreate_event(model)
-        @database_event_registry.unregister(model)
+        if @database_event_registry.event_for(model)
+          @database_event_registry.unregister(model)
+        end
 
         options = {
           :from_database => true,
