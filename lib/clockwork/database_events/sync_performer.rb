@@ -83,6 +83,8 @@ module Clockwork
           :at => at_strings_for(model)
         }
 
+        options[:tz] = model.tz if model.respond_to?(:tz)
+
         # we pass actual model instance as the job, rather than just name
         Clockwork.manager.every model.frequency, model, options, &@block
       end

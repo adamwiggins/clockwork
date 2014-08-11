@@ -142,9 +142,9 @@ module Clockwork
 end
 ```
 
-This tells clockwork to fetch all `ClockworkDatabaseEvent` instances from the database, creating an internal clockwork event for each one, configured based on the instance's `frequency`, `at` and optionally `name` methods. It also says to reload the events from the database every `1.minute`; we need pick up any changes in the database frequently (choose a sensible reload frequency by changing the `every:` option).
+This tells clockwork to fetch all `ClockworkDatabaseEvent` instances from the database, creating an internal clockwork event for each one, configured based on the instance's `frequency`, `at` and optionally `name` and `tz` methods. It also says to reload the events from the database every `1.minute`; we need pick up any changes in the database frequently (choose a sensible reload frequency by changing the `every:` option).
 
-When one of the events is ready to be run (based on it's `frequency` and `at` methods), clockwork arranges for the block passed to `sync_database_events` to be run. The above example shows how you could use either DelayedJob or Sidekiq to simply kick off a worker job. This approach is good because the ideal is to use clockwork as a simple scheduler, and avoid making it carry out any long-running tasks.
+When one of the events is ready to be run (based on it's `frequency`, `at` and possible `tz` methods), clockwork arranges for the block passed to `sync_database_events` to be run. The above example shows how you could use either DelayedJob or Sidekiq to simply kick off a worker job. This approach is good because the ideal is to use clockwork as a simple scheduler, and avoid making it carry out any long-running tasks.
 
 ### Your Model Classes
 
@@ -161,6 +161,8 @@ When one of the events is ready to be run (based on it's `frequency` and `at` me
     - `at` return nil or `''` if not using `:at`, or otherwise any acceptable clockwork `:at` string
 
     - (optionally) `name` returning the name for the event (used to identify it in the Clcockwork output)
+
+    - (optionally) `tz` returning the timezone to use (default is the local timezone)
 
 #### Example Setup
 

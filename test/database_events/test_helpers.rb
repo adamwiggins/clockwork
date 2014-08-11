@@ -32,7 +32,7 @@ end
 
 
 class ActiveRecordFake
-  attr_accessor :id, :name, :at, :frequency
+  attr_accessor :id, :name, :at, :frequency, :tz
 
   class << self
     def create *args
@@ -72,6 +72,7 @@ class ActiveRecordFake
     @name = options.fetch(:name) { nil }
     @at = options.fetch(:at) { nil }        
     @frequency = options.fetch(:frequency) { raise KeyError, ":every must be supplied" }
+    @tz = options.fetch(:tz) { nil }
 
     self.class.add self
   end

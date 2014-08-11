@@ -244,6 +244,40 @@ module DatabaseEvents
           assert_equal 1, @events_run.length
         end
       end
+
+      context "with task that respond to `tz`" do
+        setup do
+          @events_run = []
+          @utc_time_now = Time.now.utc
+          
+          DatabaseEventModelClass.create(:frequency => 1.days, :at => @utc_time_now.strftime('%H:%M'), :tz => 'America/Montreal')
+          setup_sync(model: DatabaseEventModelClass, :every => 1.minute, :events_run => @events_run)
+        end
+
+        def test_it_does_not_raise_an_error
+          begin
+            tick_at(@utc_time_now, :and_every_second_for => 10.seconds)
+          rescue => e
+            assert false, "Raised an error: #{e.message}"
+          end
+        end
+
+        def test_it_do_not_runs_the_task_as_utc
+          begin
+            tick_at(@utc_time_now, :and_every_second_for => 3.hours)
+          rescue => e
+          end
+          assert_equal 0, @events_run.length
+        end
+
+        def test_it_does_runs_the_task_as_est
+          begin
+            tick_at(@utc_time_now, :and_every_second_for => 5.hours)
+          rescue => e
+          end
+          assert_equal 1, @events_run.length
+        end
+      end
     end
   end
 end
