@@ -24,7 +24,7 @@ module Clockwork
         name_has_changed?(model) || frequency_has_changed?(model)
       end
 
-      protected
+      private
       def name_has_changed?(model)
         !job.respond_to?(:name) || job.name != model.name
       end

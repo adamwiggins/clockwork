@@ -33,7 +33,7 @@ module Clockwork
       raise FailedToParse, at
     end
 
-    attr_writer :min, :hour, :wday
+    attr_accessor :min, :hour, :wday
 
     def initialize(min, hour=NOT_SPECIFIED, wday=NOT_SPECIFIED)
       @min = min
@@ -46,6 +46,10 @@ module Clockwork
       (@min == NOT_SPECIFIED or t.min == @min) and
         (@hour == NOT_SPECIFIED or t.hour == @hour) and
         (@wday == NOT_SPECIFIED or t.wday == @wday)
+    end
+
+    def == other
+      @min == other.min && @hour == other.hour && @wday == other.wday
     end
 
     private
