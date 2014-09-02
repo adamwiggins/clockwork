@@ -23,7 +23,7 @@ def tick_at(now = Time.now, options = {})
 end
 
 def next_minute(now = Time.now)
-  Time.new(now.year, now.month, now.day, now.hour, now.min + 1, 0)
+  Time.at((now.to_i / 60 + 1) * 60)
 end
 
 def normalize_time t
