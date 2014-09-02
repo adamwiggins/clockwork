@@ -47,7 +47,7 @@ module Clockwork
         @database_event_registry.unregister_all_except(model_ids_that_exist)
       end
 
-      protected
+      private
       def are_different?(event, model)
         return true if event.nil?
         event.name_or_frequency_has_changed?(model) || ats_have_changed?(model)
