@@ -103,50 +103,70 @@ every(1.hour, 'feeds.refresh') { Feed.send_later(:refresh) }
 every(1.day, 'reminders.send', :at => '01:30') { Reminder.send_later(:send_reminders) }
 ```
 
-Use with database tasks
+Use with database events
 -----------------------
 
-You can dynamically add tasks from a database to be scheduled along with the regular events in clock.rb.
+In addition to managing static events in your `clock.rb`, you can configure clockwork to synchronise with dynamic events from a database. Like static events, these database-backed events say when they should be run, and how frequently; the difference being that if you change those settings in the database, they will be reflected in clockwork.
 
-To do this, use the `sync_database_tasks` method call:
+To keep the database events in sync with clockwork, a special manager class `DatabaseEvents::Manager` is used. You tell it to sync a database-backed model using the `sync_database_events` method, and then, at the frequency you specify, it will fetch all the events from the database, and ensure clockwork is using the latest settings.
+
+### Example `clock.rb` file
+
+Here we're using an `ActiveRecord` model called `ClockworkDatabaseEvent` to store events in the database:
 
 ```ruby
 require 'clockwork'
-require 'clockwork/manager_with_database_tasks'
+require 'clockwork/manager_with_database_events'
 require_relative './config/boot'
 require_relative './config/environment'
 
 module Clockwork
 
   # required to enable database syncing support
-  Clockwork.manager = ManagerWithDatabaseTasks.new
+  Clockwork.manager = DatabaseEvents::Manager.new
 
-  sync_database_tasks model: MyScheduledTask, every: 1.minute do |instance_job_name|
-    # Where your model will acts as a worker:
-    id = instance_job_name.split(':').last
-    task = MyScheduledTask.find(id)
-    task.perform_async
+  sync_database_events model: ClockworkDatabaseEvent, every: 1.minute do |model_instance|
 
-    # Or, e.g. if your queue system just needs job names
-    # Stalker.enqueue(instance_job_name)
+    # do some work e.g...
+
+    # running a DelayedJob task, where #some_action is a method
+    # you've defined on the model, which does the work you need
+    model_instance.delay.some_action
+
+    # performing some work with Sidekiq
+    YourSidekiqWorkerClass.perform_async
   end
 
-  [...other tasks if you have...]
+  [other events if you have]
 
 end
 ```
 
-This tells clockwork to fetch all MyScheduledTask instances from the database, and create an event for each, configured based on the instances' `frequency`, `name`, and `at` methods. It also says to reload the tasks from the database every 1.minute - we need to frequently do this as they could have changed (but you can choose a sensible reload frequency by changing the `every:` option).
+This tells clockwork to fetch all `ClockworkDatabaseEvent` instances from the database, creating an internal clockwork event for each one, configured based on the instance's `frequency`, `at` and optionally `name` and `tz` methods. It also says to reload the events from the database every `1.minute`; we need pick up any changes in the database frequently (choose a sensible reload frequency by changing the `every:` option).
 
-Rails ActiveRecord models are a perfect candidate for the model class, but you could use something else. The only requirements are:
+When one of the events is ready to be run (based on it's `frequency`, `at` and possible `tz` methods), clockwork arranges for the block passed to `sync_database_events` to be run. The above example shows how you could use either DelayedJob or Sidekiq to simply kick off a worker job. This approach is good because the ideal is to use clockwork as a simple scheduler, and avoid making it carry out any long-running tasks.
+
+### Your Model Classes
+
+`ActiveRecord` models are a perfect candidate for the model class. Having said that, the only requirements are:
 
   1. the class responds to `all` returning an array of instances from the database
-  2. the instances returned respond to:
-      `frequency` returning the how frequently (in seconds) the database task should be run
-      `name` returning the task's job name (this is what gets passed into the block above)
-      `at` return nil or `''` if not using `:at`, or otherwise any acceptable clockwork `:at` string
 
-Here's an example of one way of setting up your ActiveRecord models, using Sidekiq for background tasks, and making the model class a worker:
+  2. the instances returned respond to:
+
+    - `id` returning a unique identifier (this is needed to track changes to event settings)
+
+    - `frequency` returning the how frequently (in seconds) the database event should be run
+
+    - `at` return nil or `''` if not using `:at`, or otherwise any acceptable clockwork `:at` string
+
+    - (optionally) `name` returning the name for the event (used to identify it in the Clcockwork output)
+
+    - (optionally) `tz` returning the timezone to use (default is the local timezone)
+
+#### Example Setup
+
+Here's an example of one way of setting up your ActiveRecord models:
 
 ```ruby
 # db/migrate/20140302220659_create_frequency_periods.rb
@@ -160,44 +180,29 @@ class CreateFrequencyPeriods < ActiveRecord::Migration
   end
 end
 
-# 20140302221102_create_my_scheduled_tasks.rb
-class CreateMyScheduledTasks < ActiveRecord::Migration
+# 20140302221102_create_clockwork_database_events.rb
+class CreateClockworkDatabaseEvents < ActiveRecord::Migration
   def change
-    create_table :my_scheduled_tasks do |t|
+    create_table :clockwork_database_events do |t|
       t.integer :frequency_quantity
       t.references :frequency_period
       t.string :at
 
       t.timestamps
     end
-    add_index :my_scheduled_tasks, :frequency_period_id
+    add_index :clockwork_database_events, :frequency_period_id
   end
 end
 
-# app/models/my_scheduled_task.rb
-class MyScheduledTask < ActiveRecord::Base
-  include Sidekiq::Worker
-
+# app/models/clockwork_database_event.rb
+class ClockworkDatabaseEvent < ActiveRecord::Base
   belongs_to :frequency_period
   attr_accessible :frequency_quantity, :frequency_period_id, :at
 
-  # Used by clockwork to schedule how frequently this task should be run
+  # Used by clockwork to schedule how frequently this event should be run
   # Should be the intended number of seconds between executions
   def frequency
     frequency_quantity.send(frequency_period.name.pluralize)
-  end
-
-  # Used by clockwork to name this task internally for its logging
-  # Should return a reference for this task to be used in clockwork
-  # Include the instance ID if you want to be able to retrieve the
-  # model instance inside the sync_database_tasks block in clock.rb
-  def name
-    "Database_MyScheduledTask:#{id}"
-  end
-
-  # Method required by Sidekiq
-  def perform
-    # the task that will be performed in the background
   end
 end
 
@@ -214,8 +219,6 @@ end
 end
 ...
 ```
-
-You could, of course, create a separate Sidekiq or DelayedJob worker class under app/workers, and simply use the model referenced by clockwork to trigger that worker to run asynchronously.
 
 Event Parameters
 ----------
@@ -445,12 +448,12 @@ end
 Finally, you can use tasks synchronised from a database as described in detail above:
 
 ```ruby
-sync_database_tasks model: MyScheduledTask, every: 1.minute do |instance_job_name|
+sync_database_events model: MyEvent, every: 1.minute do |instance_job_name|
   # what to do with each instance
 end
 ```
 
-You can use multiple `sync_database_tasks` if you wish, so long as you use different model classes for each (ActiveRecord Single Table Inheritance could be a good idea if you're doing this).
+You can use multiple `sync_database_events` if you wish, so long as you use different model classes for each (ActiveRecord Single Table Inheritance could be a good idea if you're doing this).
 
 In production
 -------------
