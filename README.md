@@ -116,7 +116,7 @@ Here we're using an `ActiveRecord` model called `ClockworkDatabaseEvent` to stor
 
 ```ruby
 require 'clockwork'
-require 'clockwork/manager_with_database_events'
+require 'clockwork/database_events/manager'
 require_relative './config/boot'
 require_relative './config/environment'
 
