@@ -94,9 +94,7 @@ module DatabaseEvents
           setup_sync(model: DatabaseEventModelClass, :every => @sync_frequency, :events_run => @events_run)
 
           tick_at(@now, :and_every_second_for => @sync_frequency - 1)
-
           model.update(:name => "DatabaseEventModelClass:1:Reloaded")
-
           tick_at(@now + @sync_frequency, :and_every_second_for => model.frequency * 2)
 
           assert_equal ["DatabaseEventModelClass:1:Reloaded", "DatabaseEventModelClass:1:Reloaded"], @events_run[-2..-1]
@@ -167,17 +165,33 @@ module DatabaseEvents
           assert_wont_run 'jan 1 2010 10:30:00'
         end
 
-        def test_daily_event_from_database_with_at_should_only_run_once
-          DatabaseEventModelClass.create(:frequency => 1.day, :at => next_minute(@now).strftime('%H:%M'))
-          setup_sync(model: DatabaseEventModelClass, :every => @sync_frequency, :events_run => @events_run)
+        context "when #name is defined" do
+          def test_daily_event_from_database_with_at_should_only_run_once
+            DatabaseEventModelClass.create(:frequency => 1.day, :at => next_minute(@now).strftime('%H:%M'))
+            setup_sync(model: DatabaseEventModelClass, :every => @sync_frequency, :events_run => @events_run)
 
-          # tick from now, though specified :at time
-          tick_at(@now, :and_every_second_for => (2 * @sync_frequency) + 1.second)
+            # tick from now, though specified :at time
+            tick_at(@now, :and_every_second_for => (2 * @sync_frequency) + 1.second)
 
-          assert_equal 1, @events_run.length
+            assert_equal 1, @events_run.length
+          end
         end
 
-        def test_event_from_databse_with_comma_separated_at_leads_to_multiple_event_ats
+        context "when #name is not defined" do
+
+          def test_daily_event_from_database_with_at_should_only_run_once
+            DatabaseEventModelClassWithoutName.create(:frequency => 1.day, :at => next_minute(next_minute(@now)).strftime('%H:%M'))
+            setup_sync(model: DatabaseEventModelClassWithoutName, :every => @sync_frequency, :events_run => @events_run)
+
+            # tick from now, though specified :at time
+            tick_at(@now, :and_every_second_for => (2 * @sync_frequency) + 1.second)
+
+            assert_equal 1, @events_run.length
+          end
+
+        end
+
+        def test_event_from_database_with_comma_separated_at_leads_to_multiple_event_ats
           DatabaseEventModelClass.create(:frequency => 1.day, :at => '16:20, 18:10')
           setup_sync(model: DatabaseEventModelClass, :every => @sync_frequency, :events_run => @events_run)
 

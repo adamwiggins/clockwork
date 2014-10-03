@@ -4,7 +4,8 @@ def setup_sync(options={})
   events_run = options.fetch(:events_run) { raise KeyError, ":events_run must be provided"}
 
   Clockwork::DatabaseEvents::SyncPerformer.setup model: model_class, every: frequency do |model|
-    events_run << model.name
+    name = model.respond_to?(:name) ? model.name : model.to_s
+    events_run << name
   end
 end
 
@@ -32,7 +33,7 @@ end
 
 
 class ActiveRecordFake
-  attr_accessor :id, :name, :at, :frequency, :tz
+  attr_accessor :id, :at, :frequency, :tz
 
   class << self
     def create *args
@@ -69,16 +70,11 @@ class ActiveRecordFake
 
   def initialize options={}
     @id = options.fetch(:id) { self.class.next_id }
-    @name = options.fetch(:name) { nil }
     @at = options.fetch(:at) { nil }        
     @frequency = options.fetch(:frequency) { raise KeyError, ":every must be supplied" }
     @tz = options.fetch(:tz) { nil }
 
     self.class.add self
-  end
-
-  def name
-    @name || "#{self.class}:#{id}"
   end
 
   def delete!
@@ -91,11 +87,38 @@ class ActiveRecordFake
 end
 
 class DatabaseEventModelClass < ActiveRecordFake
+  attr_accessor :name
+
   @events = []
   @next_id = 1
+
+  def initialize options={}
+    super(options.reject{|key, value| key == :name})
+    @name = options.fetch(:name) { nil }
+  end
+
+  def name
+    @name || "#{self.class}:#{id}"
+  end
 end
 
 class DatabaseEventModelClass2 < ActiveRecordFake
+  attr_accessor :name
+
+  @events = []
+  @next_id = 1
+
+  def initialize options={}
+    super(options.reject{|key, value| key == :name})
+    @name = options.fetch(:name) { nil }
+  end
+
+  def name
+    @name || "#{self.class}:#{id}"
+  end
+end
+
+class DatabaseEventModelClassWithoutName < ActiveRecordFake
   @events = []
   @next_id = 1
 end
