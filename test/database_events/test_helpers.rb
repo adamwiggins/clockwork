@@ -1,3 +1,5 @@
+require_relative 'support/active_record_fake'
+
 def setup_sync(options={})
   model_class = options.fetch(:model) { raise KeyError, ":model must be set to the model class" }
   frequency = options.fetch(:every) { raise KeyError, ":every must be set to the database sync frequency" }
@@ -32,93 +34,25 @@ def normalize_time t
 end
 
 
-class ActiveRecordFake
-  attr_accessor :id, :at, :frequency, :tz
-
-  class << self
-    def create *args
-      new *args
-    end
-
-    def add instance
-      @events << instance
-    end
-
-    def remove instance
-      @events.delete(instance)
-    end
-
-    def next_id
-      id = @next_id
-      @next_id += 1
-      id
-    end
-
-    def reset_id
-      @next_id = 1
-    end
-
-    def delete_all
-      @events.clear
-      reset_id
-    end
-
-    def all
-      @events.dup
-    end
-  end
-
-  def initialize options={}
-    @id = options.fetch(:id) { self.class.next_id }
-    @at = options.fetch(:at) { nil }        
-    @frequency = options.fetch(:frequency) { raise KeyError, ":every must be supplied" }
-    @tz = options.fetch(:tz) { nil }
-
-    self.class.add self
-  end
-
-  def delete!
-    self.class.remove(self)
-  end
-
-  def update options={}
-    options.each{|attr, value| self.send("#{attr}=".to_sym, value) }
-  end
-end
-
-class DatabaseEventModelClass < ActiveRecordFake
-  attr_accessor :name
-
-  @events = []
-  @next_id = 1
-
-  def initialize options={}
-    super(options.reject{|key, value| key == :name})
-    @name = options.fetch(:name) { nil }
-  end
+class DatabaseEventModel
+  include ActiveRecordFake
+  attr_accessor :name, :frequency, :at, :tz
 
   def name
     @name || "#{self.class}:#{id}"
   end
 end
 
-class DatabaseEventModelClass2 < ActiveRecordFake
-  attr_accessor :name
-
-  @events = []
-  @next_id = 1
-
-  def initialize options={}
-    super(options.reject{|key, value| key == :name})
-    @name = options.fetch(:name) { nil }
-  end
+class DatabaseEventModel2
+  include ActiveRecordFake
+  attr_accessor :name, :frequency, :at, :tz
 
   def name
     @name || "#{self.class}:#{id}"
   end
 end
 
-class DatabaseEventModelClassWithoutName < ActiveRecordFake
-  @events = []
-  @next_id = 1
+class DatabaseEventModelWithoutName
+  include ActiveRecordFake
+  attr_accessor :frequency, :at
 end
