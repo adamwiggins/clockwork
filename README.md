@@ -474,7 +474,7 @@ Daemonization
 
 Thanks to @fddayan, `clockworkd` executes clockwork script as a daemon.
 
-You will need the `[daemons](https://github.com/ghazel/daemons)` gem to use `clockworkd`.  It is not automatically installed, please install by yourself.
+You will need the [daemons gem](https://github.com/ghazel/daemons) to use `clockworkd`.  It is not automatically installed, please install by yourself.
 
 Then,
 
