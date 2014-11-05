@@ -466,7 +466,7 @@ topography:
 * App server 1: 3 web (thin start), 3 workers (rake jobs:work), 1 clock (clockwork clock.rb)
 * App server 2: 3 web (thin start), 3 workers (rake jobs:work)
 
-You should use Monit, God, Upstart, or Inittab to keep your clock process
+You should use [Monit](http://mmonit.com/monit/), [God](https://github.com/mojombo/god), [Upstart](http://upstart.ubuntu.com/), or [Inittab](http://www.tldp.org/LDP/sag/html/config-init.html) to keep your clock process
 running the same way you keep your web and workers running.
 
 Daemonization
@@ -474,7 +474,7 @@ Daemonization
 
 Thanks to @fddayan, `clockworkd` executes clockwork script as a daemon.
 
-You will need the `daemons` gem to use `clockworkd`.  It is not automatically installed, please install by yourself.
+You will need the [daemons gem](https://github.com/ghazel/daemons) to use `clockworkd`.  It is not automatically installed, please install by yourself.
 
 Then,
 
@@ -482,7 +482,7 @@ Then,
 clockworkd -c YOUR_CLOCK.rb start
 ```
 
-For more details, see help shown by `clockworkd`.
+For more details, you can run `clockworkd -h`.
 
 Issues and Pull requests
 ------------------------
