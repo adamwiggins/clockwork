@@ -60,6 +60,14 @@ class ManagerTest < Test::Unit::TestCase
     assert_will_run(t+60*60*24*7)
   end
 
+  test "won't drift later and later" do
+    @manager.every(1.hour, 'myjob')
+
+    assert_will_run(Time.parse("10:00:00.5"))
+    assert_wont_run(Time.parse("10:59:59.999"))
+    assert_will_run(Time.parse("11:00:00.0"))
+  end
+
   test "aborts when no handler defined" do
     manager = Clockwork::Manager.new
     assert_raise(Clockwork::Manager::NoHandlerDefined) do

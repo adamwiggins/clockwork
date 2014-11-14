@@ -58,7 +58,7 @@ module Clockwork
     end
 
     def elapsed_ready(t)
-      @last.nil? || (t - @last).to_i >= @period
+      @last.nil? || (t - @last.to_i).to_i >= @period
     end
 
     def validate_if_option(if_option)
