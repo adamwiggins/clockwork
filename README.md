@@ -327,6 +327,9 @@ own logger implementation you have to specify the `logger` configuration option.
 Clockwork wakes up once a second and performs its duties. To change the number of seconds Clockwork
 sleeps, set the `sleep_timeout` configuration option as shown below in the example.
 
+From 1.1.0, Clockwork does not accept `sleep_timeout` less than 1 seconds.
+This restriction is introduced to solve more severe bug [#135](https://github.com/tomykaira/clockwork/pull/135).
+
 ### :tz
 
 This is the default timezone to use for all events.  When not specified this defaults to the local

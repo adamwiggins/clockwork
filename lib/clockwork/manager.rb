@@ -17,6 +17,9 @@ module Clockwork
 
     def configure
       yield(config)
+      if config[:sleep_timeout] < 1
+        config[:logger].warn 'sleep_timeout must be >= 1 second'
+      end
     end
 
     def default_configuration
