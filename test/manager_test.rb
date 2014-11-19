@@ -150,7 +150,7 @@ class ManagerTest < Test::Unit::TestCase
   end
 
   test "configuration should have reasonable defaults" do
-    assert_equal 0.5, @manager.config[:sleep_timeout]
+    assert_equal 1, @manager.config[:sleep_timeout]
     assert @manager.config[:logger].is_a?(Logger)
     assert_equal 10, @manager.config[:max_threads]
     assert_equal false, @manager.config[:thread]

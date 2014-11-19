@@ -324,7 +324,7 @@ own logger implementation you have to specify the `logger` configuration option.
 
 ### :sleep_timeout
 
-Clockwork wakes up twice a second and performs its duties. To change the number of seconds Clockwork
+Clockwork wakes up once a second and performs its duties. To change the number of seconds Clockwork
 sleeps, set the `sleep_timeout` configuration option as shown below in the example.
 
 ### :tz
@@ -433,7 +433,7 @@ end
 
 In addition, Clockwork also supports `:before_tick` and `after_tick` callbacks.
 They are optional, and run every tick (a tick being whatever your `:sleep_timeout`
-is set to, default is 0.5 seconds):
+is set to, default is 1 second):
 
 ```ruby
 on(:before_tick) do
