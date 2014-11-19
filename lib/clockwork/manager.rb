@@ -55,7 +55,8 @@ module Clockwork
       log "Starting clock for #{@events.size} events: [ #{@events.map(&:to_s).join(' ')} ]"
       loop do
         tick
-        sleep(config[:sleep_timeout])
+        interval = config[:sleep_timeout] - Time.now.subsec + 0.001
+        sleep(interval) if interval > 0
       end
     end
 
