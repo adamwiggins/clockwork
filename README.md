@@ -36,7 +36,7 @@ module Clockwork
 end
 ```
 
-Run it with the clockwork binary:
+Run it with the clockwork executable:
 
 ```
 $ clockwork clock.rb
@@ -390,7 +390,7 @@ Anatomy of a clock file
 -----------------------
 
 clock.rb is standard Ruby.  Since we include the Clockwork module (the
-clockwork binary does this automatically, or you can do it explicitly), this
+clockwork executable does this automatically, or you can do it explicitly), this
 exposes a small DSL to define the handler for events, and then the events themselves.
 
 The handler typically looks like this:
