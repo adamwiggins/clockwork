@@ -269,6 +269,9 @@ You can specify the day of week to run:
 every(1.week, 'myjob', :at => 'Monday 16:20')
 ```
 
+If a task is running all while the specified time, clockwork skip execution of the task with `:at` option.
+If this is problem, use `:thread` option prevent the long running task from blocking clockwork's scheduler.
+
 ### :tz
 
 `:tz` parameter lets you specify a timezone (default is the local timezone):
