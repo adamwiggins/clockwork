@@ -1,11 +1,12 @@
 require File.expand_path('../../lib/clockwork', __FILE__)
 require 'rubygems'
-require 'contest'
+require 'test/unit'
 require 'mocha/setup'
 require 'time'
 require 'active_support/time'
+require 'active_support/test_case'
 
-class AtTest < Test::Unit::TestCase
+class AtTest < ActiveSupport::TestCase
   def time_in_day(hour, minute)
     Time.new(2013, 1, 1, hour, minute, 0)
   end

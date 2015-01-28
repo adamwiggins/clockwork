@@ -1,5 +1,5 @@
 require File.expand_path('../../lib/clockwork', __FILE__)
-require 'contest'
+require 'test/unit'
 require 'mocha/setup'
 
 class ClockworkTest < Test::Unit::TestCase

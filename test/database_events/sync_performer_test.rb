@@ -1,7 +1,8 @@
-require 'contest'
+require 'test/unit'
 require 'mocha/setup'
 require 'time'
 require 'active_support/time'
+require 'active_support/test_case'
 
 require_relative '../../lib/clockwork'
 require_relative '../../lib/clockwork/database_events'
@@ -9,7 +10,7 @@ require_relative 'test_helpers'
 
 module DatabaseEvents
 
-  class SyncPerformerTest < Test::Unit::TestCase
+  class SyncPerformerTest < ActiveSupport::TestCase
 
     setup do
       @now = Time.now
@@ -58,7 +59,7 @@ module DatabaseEvents
           setup_sync(model: DatabaseEventModel, :every => @sync_frequency, :events_run => @events_run)
 
           tick_at(@now, :and_every_second_for => 1.second)
-          
+
           assert_equal ["DatabaseEventModel:1"], @events_run
         end
 
@@ -263,7 +264,7 @@ module DatabaseEvents
         setup do
           @events_run = []
           @utc_time_now = Time.now.utc
-          
+
           DatabaseEventModel.create(:frequency => 1.days, :at => @utc_time_now.strftime('%H:%M'), :tz => 'America/Montreal')
           setup_sync(model: DatabaseEventModel, :every => 1.minute, :events_run => @events_run)
         end

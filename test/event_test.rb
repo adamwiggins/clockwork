@@ -1,7 +1,7 @@
 require File.expand_path('../../lib/clockwork', __FILE__)
-require 'contest'
+require 'active_support/test_case'
 
-class EventTest < Test::Unit::TestCase
+class EventTest < ActiveSupport::TestCase
   describe "#thread?" do
     setup do
       @manager = mock
