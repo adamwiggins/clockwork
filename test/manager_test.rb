@@ -1,11 +1,12 @@
 require File.expand_path('../../lib/clockwork', __FILE__)
 require 'rubygems'
-require 'contest'
+require 'test/unit'
 require 'mocha/setup'
 require 'time'
 require 'active_support/time'
+require 'active_support/test_case'
 
-class ManagerTest < Test::Unit::TestCase
+class ManagerTest < ActiveSupport::TestCase
   setup do
     @manager = Clockwork::Manager.new
     class << @manager
