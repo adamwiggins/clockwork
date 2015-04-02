@@ -269,8 +269,8 @@ You can specify the day of week to run:
 every(1.week, 'myjob', :at => 'Monday 16:20')
 ```
 
-If a task is running all while the specified time, clockwork skip execution of the task with `:at` option.
-If this is problem, use `:thread` option prevent the long running task from blocking clockwork's scheduler.
+If another task is already running at the specified time, clockwork will skip execution of the task with the `:at` option.
+If this is a problem, please use the `:thread` option to prevent the long running task from blocking clockwork's scheduler.
 
 ### :tz
 
@@ -303,11 +303,11 @@ Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
 
 ### :thread
 
-In default, clockwork runs in single-process, single-thread.
-If an event handler takes long time, the main routine of clockwork is blocked until it ends.
+By default, clockwork runs in a single-process and single-thread.
+If an event handler takes a long time, the main routine of clockwork is blocked until it ends.
 Clockwork does not misbehave, but the next event is blocked, and runs when the process is returned to the clockwork routine.
 
-This `:thread` option is to avoid blocking. An event with `:thread => true`  runs in a different thread.
+The `:thread` option is to avoid blocking. An event with `thread: true` runs in a different thread.
 
 ```ruby
 Clockwork.every(1.day, 'run.me.in.new.thread', :thread => true)
