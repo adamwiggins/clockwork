@@ -42,7 +42,11 @@ module Clockwork
       (@callbacks[event.to_sym]||=[]) << block
     end
 
-    def every(period, job, options={}, &block)
+    def every(period, job='unnamed', options={}, &block)
+      if job.is_a?(Hash) and options.empty?
+        options = job
+        job = "unnamed"
+      end
       if options[:at].respond_to?(:each)
         every_with_multiple_times(period, job, options, &block)
       else

@@ -157,6 +157,16 @@ class ManagerTest < ActiveSupport::TestCase
     assert_equal false, @manager.config[:thread]
   end
 
+  test "should accept unnamed job" do
+    event = @manager.every(1.minute)
+    assert_equal 'unnamed', event.job
+  end
+
+  test "should accept options without job name" do
+    event = @manager.every(1.minute, {})
+    assert_equal 'unnamed', event.job
+  end
+
   describe ':at option' do
     test "once a day at 16:20" do
       @manager.every(1.day, 'myjob', :at => '16:20')
