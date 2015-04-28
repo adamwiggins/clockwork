@@ -450,13 +450,13 @@ on(:after_tick) do
   puts "tock"
 end
 
-  on(:before_run) do |event, t|
-    puts "job_started: #{event}"
-  end
+on(:before_run) do |event, t|
+  puts "job_started: #{event}"
+end
 
-  on(:after_run) do |event, t|
-    puts "job_finished: #{event}"
-  end
+on(:after_run) do |event, t|
+  puts "job_finished: #{event}"
+end
 ```
 
 Finally, you can use tasks synchronised from a database as described in detail above:
