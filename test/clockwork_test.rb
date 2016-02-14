@@ -1,9 +1,9 @@
 require File.expand_path('../../lib/clockwork', __FILE__)
-require 'test/unit'
+require 'minitest/autorun'
 require 'mocha/setup'
 
-class ClockworkTest < Test::Unit::TestCase
-  setup do
+describe Clockwork do
+  before do
     @log_output = StringIO.new
     Clockwork.configure do |config|
       config[:sleep_timeout] = 0
@@ -11,11 +11,11 @@ class ClockworkTest < Test::Unit::TestCase
     end
   end
 
-  teardown do
+  after do
     Clockwork.clear!
   end
 
-  test 'should run events with configured logger' do
+  it 'should run events with configured logger' do
     run = false
     Clockwork.handler do |job|
       run = job == 'myjob'
@@ -23,11 +23,12 @@ class ClockworkTest < Test::Unit::TestCase
     Clockwork.every(1.minute, 'myjob')
     Clockwork.manager.expects(:loop).yields.then.returns
     Clockwork.run
+
     assert run
     assert @log_output.string.include?('Triggering')
   end
 
-  test 'should log event correctly' do
+  it 'should log event correctly' do
     run = false
     Clockwork.handler do |job|
       run = job == 'an event'
@@ -39,7 +40,7 @@ class ClockworkTest < Test::Unit::TestCase
     assert @log_output.string.include?("Triggering 'an event'")
   end
 
-  test 'should pass event without modification to handler' do
+  it 'should pass event without modification to handler' do
     event_object = Object.new
     run = false
     Clockwork.handler do |job|
@@ -51,7 +52,7 @@ class ClockworkTest < Test::Unit::TestCase
     assert run
   end
 
-  test 'should not run anything after reset' do
+  it 'should not run anything after reset' do
     Clockwork.every(1.minute, 'myjob') {  }
     Clockwork.clear!
     Clockwork.configure do |config|
@@ -63,7 +64,7 @@ class ClockworkTest < Test::Unit::TestCase
     assert @log_output.string.include?('0 events')
   end
 
-  test 'should pass all arguments to every' do
+  it 'should pass all arguments to every' do
     Clockwork.every(1.second, 'myjob', if: lambda { |_| false }) {  }
     Clockwork.manager.expects(:loop).yields.then.returns
     Clockwork.run
@@ -71,7 +72,7 @@ class ClockworkTest < Test::Unit::TestCase
     assert !@log_output.string.include?('Triggering')
   end
 
-  test 'support module re-open style' do
+  it 'support module re-open style' do
     $called = false
     module ::Clockwork
       every(1.second, 'myjob') { $called = true }

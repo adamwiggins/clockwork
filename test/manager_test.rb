@@ -1,13 +1,12 @@
 require File.expand_path('../../lib/clockwork', __FILE__)
 require 'rubygems'
-require 'test/unit'
 require 'mocha/setup'
 require 'time'
 require 'active_support/time'
-require 'active_support/test_case'
+require "minitest/autorun"
 
-class ManagerTest < ActiveSupport::TestCase
-  setup do
+describe Clockwork::Manager do
+  before do
     @manager = Clockwork::Manager.new
     class << @manager
       def log(msg); end
@@ -29,7 +28,7 @@ class ManagerTest < ActiveSupport::TestCase
     assert_equal 0, @manager.tick(t).size
   end
 
-  test "once a minute" do
+  it "once a minute" do
     @manager.every(1.minute, 'myjob')
 
     assert_will_run(t=Time.now)
@@ -37,7 +36,7 @@ class ManagerTest < ActiveSupport::TestCase
     assert_will_run(t+60)
   end
 
-  test "every three minutes" do
+  it "every three minutes" do
     @manager.every(3.minutes, 'myjob')
 
     assert_will_run(t=Time.now)
@@ -45,7 +44,7 @@ class ManagerTest < ActiveSupport::TestCase
     assert_will_run(t+3*60)
   end
 
-  test "once an hour" do
+  it "once an hour" do
     @manager.every(1.hour, 'myjob')
 
     assert_will_run(t=Time.now)
@@ -53,7 +52,7 @@ class ManagerTest < ActiveSupport::TestCase
     assert_will_run(t+60*60)
   end
 
-  test "once a week" do
+  it "once a week" do
     @manager.every(1.week, 'myjob')
 
     assert_will_run(t=Time.now)
@@ -61,7 +60,7 @@ class ManagerTest < ActiveSupport::TestCase
     assert_will_run(t+60*60*24*7)
   end
 
-  test "won't drift later and later" do
+  it "won't drift later and later" do
     @manager.every(1.hour, 'myjob')
 
     assert_will_run(Time.parse("10:00:00.5"))
@@ -69,20 +68,20 @@ class ManagerTest < ActiveSupport::TestCase
     assert_will_run(Time.parse("11:00:00.0"))
   end
 
-  test "aborts when no handler defined" do
+  it "aborts when no handler defined" do
     manager = Clockwork::Manager.new
-    assert_raise(Clockwork::Manager::NoHandlerDefined) do
+    assert_raises(Clockwork::Manager::NoHandlerDefined) do
       manager.every(1.minute, 'myjob')
     end
   end
 
-  test "aborts when fails to parse" do
-    assert_raise(Clockwork::At::FailedToParse) do
+  it "aborts when fails to parse" do
+    assert_raises(Clockwork::At::FailedToParse) do
       @manager.every(1.day, "myjob", :at => "a:bc")
     end
   end
 
-  test "general handler" do
+  it "general handler" do
     $set_me = 0
     @manager.handler { $set_me = 1 }
     @manager.every(1.minute, 'myjob')
@@ -90,7 +89,7 @@ class ManagerTest < ActiveSupport::TestCase
     assert_equal 1, $set_me
   end
 
-  test "event-specific handler" do
+  it "event-specific handler" do
     $set_me = 0
     @manager.every(1.minute, 'myjob') { $set_me = 2 }
     @manager.tick(Time.now)
@@ -98,7 +97,7 @@ class ManagerTest < ActiveSupport::TestCase
     assert_equal 2, $set_me
   end
 
-  test "should pass time to the general handler" do
+  it "should pass time to the general handler" do
     received = nil
     now = Time.now
     @manager.handler { |job, time| received = time }
@@ -107,7 +106,7 @@ class ManagerTest < ActiveSupport::TestCase
     assert_equal now, received
   end
 
-  test "should pass time to the event-specific handler" do
+  it "should pass time to the event-specific handler" do
     received = nil
     now = Time.now
     @manager.every(1.minute, 'myjob') { |job, time| received = time }
@@ -115,20 +114,18 @@ class ManagerTest < ActiveSupport::TestCase
     assert_equal now, received
   end
 
-  test "exceptions are trapped and logged" do
+  it "exceptions are trapped and logged" do
     @manager.handler { raise 'boom' }
     @manager.every(1.minute, 'myjob')
 
-    logger = Logger.new(StringIO.new)
-    @manager.configure { |c| c[:logger] = logger }
-    logger.expects(:error)
-
-    assert_nothing_raised do
-      @manager.tick(Time.now)
-    end
+    mocked_logger = MiniTest::Mock.new
+    mocked_logger.expect :error, true, [RuntimeError]
+    @manager.configure { |c| c[:logger] = mocked_logger }
+    @manager.tick(Time.now)
+    mocked_logger.verify
   end
 
-  test "exceptions still set the last timestamp to avoid spastic error loops" do
+  it "exceptions still set the last timestamp to avoid spastic error loops" do
     @manager.handler { raise 'boom' }
     event = @manager.every(1.minute, 'myjob')
     @manager.stubs(:log_error)
@@ -136,7 +133,7 @@ class ManagerTest < ActiveSupport::TestCase
     assert_equal t, event.last
   end
 
-  test "should be configurable" do
+  it "should be configurable" do
     @manager.configure do |config|
       config[:sleep_timeout] = 200
       config[:logger] = "A Logger"
@@ -150,25 +147,25 @@ class ManagerTest < ActiveSupport::TestCase
     assert_equal true, @manager.config[:thread]
   end
 
-  test "configuration should have reasonable defaults" do
+  it "configuration should have reasonable defaults" do
     assert_equal 1, @manager.config[:sleep_timeout]
     assert @manager.config[:logger].is_a?(Logger)
     assert_equal 10, @manager.config[:max_threads]
     assert_equal false, @manager.config[:thread]
   end
 
-  test "should accept unnamed job" do
+  it "should accept unnamed job" do
     event = @manager.every(1.minute)
     assert_equal 'unnamed', event.job
   end
 
-  test "should accept options without job name" do
+  it "should accept options without job name" do
     event = @manager.every(1.minute, {})
     assert_equal 'unnamed', event.job
   end
 
   describe ':at option' do
-    test "once a day at 16:20" do
+    it "once a day at 16:20" do
       @manager.every(1.day, 'myjob', :at => '16:20')
 
       assert_wont_run 'jan 1 2010 16:19:59'
@@ -178,7 +175,7 @@ class ManagerTest < ActiveSupport::TestCase
       assert_will_run 'jan 2 2010 16:20:00'
     end
 
-    test "twice a day at 16:20 and 18:10" do
+    it "twice a day at 16:20 and 18:10" do
       @manager.every(1.day, 'myjob', :at => ['16:20', '18:10'])
 
       assert_wont_run 'jan 1 2010 16:19:59'
@@ -192,18 +189,18 @@ class ManagerTest < ActiveSupport::TestCase
   end
 
   describe ':tz option' do
-    test "time zone is not set by default" do
+    it "time zone is not set by default" do
       assert @manager.config[:tz].nil?
     end
 
-    test "should be able to specify a different timezone than local" do
+    it "should be able to specify a different timezone than local" do
       @manager.every(1.day, 'myjob', :at => '10:00', :tz => 'UTC')
 
       assert_wont_run 'jan 1 2010 10:00:00 EST'
       assert_will_run 'jan 1 2010 10:00:00 UTC'
     end
 
-    test "should be able to specify a different timezone than local for multiple times" do
+    it "should be able to specify a different timezone than local for multiple times" do
       @manager.every(1.day, 'myjob', :at => ['10:00', '8:00'], :tz => 'UTC')
 
       assert_wont_run 'jan 1 2010 08:00:00 EST'
@@ -212,7 +209,7 @@ class ManagerTest < ActiveSupport::TestCase
       assert_will_run 'jan 1 2010 10:00:00 UTC'
     end
 
-    test "should be able to configure a default timezone to use for all events" do
+    it "should be able to configure a default timezone to use for all events" do
       @manager.configure { |config| config[:tz] = 'UTC' }
       @manager.every(1.day, 'myjob', :at => '10:00')
 
@@ -220,7 +217,7 @@ class ManagerTest < ActiveSupport::TestCase
       assert_will_run 'jan 1 2010 10:00:00 UTC'
     end
 
-    test "should be able to override a default timezone in an event" do
+    it "should be able to override a default timezone in an event" do
       @manager.configure { |config| config[:tz] = 'UTC' }
       @manager.every(1.day, 'myjob', :at => '10:00', :tz => 'EST')
 
@@ -230,19 +227,19 @@ class ManagerTest < ActiveSupport::TestCase
   end
 
   describe ':if option' do
-    test ":if true then always run" do
+    it ":if true then always run" do
       @manager.every(1.second, 'myjob', :if => lambda { |_| true })
 
       assert_will_run 'jan 1 2010 16:20:00'
     end
 
-    test ":if false then never run" do
+    it ":if false then never run" do
       @manager.every(1.second, 'myjob', :if => lambda { |_| false })
 
       assert_wont_run 'jan 1 2010 16:20:00'
     end
 
-    test ":if the first day of month" do
+    it ":if the first day of month" do
       @manager.every(1.second, 'myjob', :if => lambda { |t| t.day == 1 })
 
       assert_will_run 'jan 1 2010 16:20:00'
@@ -250,7 +247,7 @@ class ManagerTest < ActiveSupport::TestCase
       assert_will_run 'feb 1 2010 16:20:00'
     end
 
-    test ":if it is compared to a time with zone" do
+    it ":if it is compared to a time with zone" do
       tz = 'America/Chicago'
       time = Time.utc(2012,5,25,10,00)
       @manager.every(1.second, 'myjob', tz: tz, :if => lambda  { |t|
@@ -259,15 +256,15 @@ class ManagerTest < ActiveSupport::TestCase
       assert_will_run time
     end
 
-    test ":if is not callable then raise ArgumentError" do
-      assert_raise(ArgumentError) do
+    it ":if is not callable then raise ArgumentError" do
+      assert_raises(ArgumentError) do
         @manager.every(1.second, 'myjob', :if => true)
       end
     end
   end
 
   describe "max_threads" do
-    test "should warn when an event tries to generate threads more than max_threads" do
+    it "should warn when an event tries to generate threads more than max_threads" do
       logger = Logger.new(STDOUT)
       @manager.configure do |config|
         config[:max_threads] = 1
@@ -281,7 +278,7 @@ class ManagerTest < ActiveSupport::TestCase
       @manager.tick(Time.now)
     end
 
-    test "should not warn when thread is managed by others" do
+    it "should not warn when thread is managed by others" do
       begin
         t = Thread.new { sleep 5 }
         logger = Logger.new(StringIO.new)
@@ -301,15 +298,15 @@ class ManagerTest < ActiveSupport::TestCase
   end
 
   describe "callbacks" do
-    test "should not accept unknown callback name" do
-      assert_raise(RuntimeError, "Unsupported callback unknown_callback") do
+    it "should not accept unknown callback name" do
+      assert_raises(RuntimeError, "Unsupported callback unknown_callback") do
         @manager.on(:unknown_callback) do
           true
         end
       end
     end
 
-    test "should run before_tick callback once on tick" do
+    it "should run before_tick callback once on tick" do
       counter = 0
       @manager.on(:before_tick) do
         counter += 1
@@ -318,7 +315,7 @@ class ManagerTest < ActiveSupport::TestCase
       assert_equal 1, counter
     end
 
-    test "should not run events if before_tick returns false" do
+    it "should not run events if before_tick returns false" do
       @manager.on(:before_tick) do
         false
       end
@@ -326,7 +323,7 @@ class ManagerTest < ActiveSupport::TestCase
       @manager.tick
     end
 
-    test "should run before_run twice if two events are registered" do
+    it "should run before_run twice if two events are registered" do
       counter = 0
       @manager.on(:before_run) do
         counter += 1
@@ -337,7 +334,7 @@ class ManagerTest < ActiveSupport::TestCase
       assert_equal 2, counter
     end
 
-    test "should run even jobs only" do
+    it "should run even jobs only" do
       counter = 0
       ran = false
       @manager.on(:before_run) do
@@ -350,7 +347,7 @@ class ManagerTest < ActiveSupport::TestCase
       assert ran
     end
 
-    test "should run after_run callback for each event" do
+    it "should run after_run callback for each event" do
       counter = 0
       @manager.on(:after_run) do
         counter += 1
@@ -361,7 +358,7 @@ class ManagerTest < ActiveSupport::TestCase
       assert_equal 2, counter
     end
 
-    test "should run after_tick callback once" do
+    it "should run after_tick callback once" do
       counter = 0
       @manager.on(:after_tick) do
         counter += 1
@@ -372,7 +369,7 @@ class ManagerTest < ActiveSupport::TestCase
   end
 
   describe 'error_handler' do
-    setup do
+    before do
       @errors = []
       @manager.error_handler do |e|
         @errors << e
@@ -383,24 +380,24 @@ class ManagerTest < ActiveSupport::TestCase
       @manager.configure do |config|
         config[:logger] = Logger.new(@string_io)
       end
-      @manager.every(1.second, 'myjob') { raise 'test error' }
+      @manager.every(1.second, 'myjob') { raise 'it error' }
     end
 
-    test 'registered error_handler handles error from event' do
+    it 'registered error_handler handles error from event' do
       @manager.tick
-      assert_equal ['test error'], @errors.map(&:message)
+      assert_equal ['it error'], @errors.map(&:message)
     end
 
-    test 'error is notified to logger and handler' do
+    it 'error is notified to logger and handler' do
       @manager.tick
-      assert @string_io.string.include?('test error')
+      assert @string_io.string.include?('it error')
     end
 
-    test 'error in handler will NOT be suppressed' do
+    it 'error in handler will NOT be suppressed' do
       @manager.error_handler do |e|
         raise e.message + ' re-raised'
       end
-      assert_raise(RuntimeError, 'test error re-raised') do
+      assert_raises(RuntimeError, 'it error re-raised') do
         @manager.tick
       end
     end
