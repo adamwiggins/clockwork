@@ -7,4 +7,5 @@ platforms :rbx do
 end
 
 gem 'activesupport', '~> 4.0.0'
+gem 'minitest', '~> 4.2'
 gemspec :path=>"../"
