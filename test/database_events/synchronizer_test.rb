@@ -7,7 +7,7 @@ require_relative '../../lib/clockwork'
 require_relative '../../lib/clockwork/database_events'
 require_relative 'test_helpers'
 
-describe Clockwork::DatabaseEvents::SyncPerformer do
+describe Clockwork::DatabaseEvents::Synchronizer do
   before do
     @now = Time.now
     DatabaseEventModel.delete_all
@@ -25,7 +25,7 @@ describe Clockwork::DatabaseEvents::SyncPerformer do
 
   describe "setup" do
     before do
-      @subject = Clockwork::DatabaseEvents::SyncPerformer
+      @subject = Clockwork::DatabaseEvents::Synchronizer
     end
 
     describe "arguments" do

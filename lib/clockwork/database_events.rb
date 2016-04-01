@@ -1,6 +1,6 @@
 require_relative 'database_events/event'
-require_relative 'database_events/sync_performer'
-require_relative 'database_events/registry'
+require_relative 'database_events/synchronizer'
+require_relative 'database_events/event_store'
 require_relative 'database_events/manager'
 
 # TERMINOLOGY
@@ -15,7 +15,7 @@ module Clockwork
 
   module Methods
     def sync_database_events(options={}, &block)
-      DatabaseEvents::SyncPerformer.setup(options, &block)
+      DatabaseEvents::Synchronizer.setup(options, &block)
     end
   end
 

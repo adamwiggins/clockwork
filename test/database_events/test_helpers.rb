@@ -5,7 +5,7 @@ def setup_sync(options={})
   frequency = options.fetch(:every) { raise KeyError, ":every must be set to the database sync frequency" }
   events_run = options.fetch(:events_run) { raise KeyError, ":events_run must be provided"}
 
-  Clockwork::DatabaseEvents::SyncPerformer.setup model: model_class, every: frequency do |model|
+  Clockwork::DatabaseEvents::Synchronizer.setup model: model_class, every: frequency do |model|
     name = model.respond_to?(:name) ? model.name : model.to_s
     events_run << name
   end

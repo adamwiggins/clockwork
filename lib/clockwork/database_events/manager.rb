@@ -10,7 +10,7 @@ module Clockwork
 
       def register(period, job, block, options)
         @events << if options[:from_database]
-          Clockwork::DatabaseEvents::Event.new(self, period, job, (block || handler), options.fetch(:sync_performer), options)
+          Clockwork::DatabaseEvents::Event.new(self, period, job, (block || handler), options.fetch(:synchronizer), options)
         else
           Clockwork::Event.new(self, period, job, block || handler, options)
         end
