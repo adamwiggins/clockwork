@@ -1,3 +1,5 @@
+require_relative './event_collection'
+
 # How EventStore and Clockwork manager events are kept in sync...
 #
 # The normal Clockwork::Manager is responsible for keeping track of
