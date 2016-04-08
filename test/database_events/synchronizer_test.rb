@@ -10,8 +10,6 @@ require_relative 'test_helpers'
 describe Clockwork::DatabaseEvents::Synchronizer do
   before do
     @now = Time.now
-    DatabaseEventModel.delete_all
-    DatabaseEventModel2.delete_all
 
     Clockwork.manager = @manager = Clockwork::DatabaseEvents::Manager.new
     class << @manager
@@ -21,6 +19,9 @@ describe Clockwork::DatabaseEvents::Synchronizer do
 
   after do
     Clockwork.clear!
+    DatabaseEventModel.delete_all
+    DatabaseEventModel2.delete_all
+    DatabaseEventModelWithIf.delete_all
   end
 
   describe "setup" do
@@ -251,6 +252,37 @@ describe Clockwork::DatabaseEvents::Synchronizer do
         rescue
         end
         assert_equal 1, @events_run.length
+      end
+    end
+
+    describe "with model that responds to `if?`" do
+
+      before do
+        @events_run = []
+      end
+
+      describe "when model.if? is true" do
+        it 'runs' do
+          DatabaseEventModelWithIf.create(:if_state => true, :frequency => 10)
+          setup_sync(model: DatabaseEventModelWithIf, :every => 1.minute, :events_run => @events_run)
+
+          tick_at(@now, :and_every_second_for => 9.seconds)
+
+          assert_equal 1, @events_run.length
+        end
+      end
+
+      describe "when model.if? is false" do
+        it 'does not run' do
+          DatabaseEventModelWithIf.create(:if_state => false, :frequency => 10, :name => 'model with if?')
+          setup_sync(model: DatabaseEventModelWithIf, :every => 1.minute, :events_run => @events_run)
+
+          tick_at(@now, :and_every_second_for => 1.minute)
+
+          # require 'byebug'
+          # byebug if events_run.length > 0
+          assert_equal 0, @events_run.length
+        end
       end
     end
 

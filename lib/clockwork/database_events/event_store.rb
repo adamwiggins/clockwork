@@ -112,10 +112,15 @@ module Clockwork
         options = {
           :from_database => true,
           :synchronizer => self,
-          :at => at_strings_for(model)
         }
 
+        options[:at] = at_strings_for(model) if model.respond_to?(:at)
+        options[:if] = ->(time){ model.if?(time) } if model.respond_to?(:if?)
         options[:tz] = model.tz if model.respond_to?(:tz)
+
+        # store the state of the model at time of registering so we can
+        # easily compare and determine if state has changed later
+        options[:model_attributes] = model.attributes
 
         options
       end

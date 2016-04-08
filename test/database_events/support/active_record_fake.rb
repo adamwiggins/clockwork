@@ -23,6 +23,10 @@ module ActiveRecordFake
     set_attribute_values_from_options options
   end
 
+  def attributes
+    Hash[instance_variables.map { |name| [name, instance_variable_get(name)] } ]
+  end
+
   module ClassMethods
     def create *args
       new *args

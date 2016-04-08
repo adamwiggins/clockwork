@@ -142,9 +142,9 @@ module Clockwork
 end
 ```
 
-This tells clockwork to fetch all `ClockworkDatabaseEvent` instances from the database, creating an internal clockwork event for each one, configured based on the instance's `frequency`, `at` and optionally `name` and `tz` methods. It also says to reload the events from the database every `1.minute`; we need pick up any changes in the database frequently (choose a sensible reload frequency by changing the `every:` option).
+This tells clockwork to fetch all `ClockworkDatabaseEvent` instances from the database, and create an internal clockwork event for each one. Each clockwork event will be configured based on the instance's `frequency` and, optionally, its `at`, `name`, `if?` and `tz` methods. The code above also says to reload the events from the database every `1.minute`; we need pick up any changes in the database frequently (choose a sensible reload frequency by changing the `every:` option).
 
-When one of the events is ready to be run (based on it's `frequency`, `at` and possible `tz` methods), clockwork arranges for the block passed to `sync_database_events` to be run. The above example shows how you could use either DelayedJob or Sidekiq to simply kick off a worker job. This approach is good because the ideal is to use clockwork as a simple scheduler, and avoid making it carry out any long-running tasks.
+When one of the events is ready to be run (based on it's `frequency`, and possible `at`, `if?` and `tz` methods), clockwork arranges for the block passed to `sync_database_events` to be run. The above example shows how you could use either DelayedJob or Sidekiq to kick off a worker job. This approach is good because the ideal is to use clockwork as a simple scheduler, and avoid making it carry out any long-running tasks.
 
 ### Your Model Classes
 
@@ -158,9 +158,13 @@ When one of the events is ready to be run (based on it's `frequency`, `at` and p
 
     - `frequency` returning the how frequently (in seconds) the database event should be run
 
-    - `at` return nil or `''` if not using `:at`, or otherwise any acceptable clockwork `:at` string
+    - `attributes` returning a hash of [attribute name] => [attribute value] values (or really anything that we can use store on registering the event, and then compare again to see if the state has changed later)
+
+    - (optionally) `at` return any acceptable clockwork `:at` string
 
     - (optionally) `name` returning the name for the event (used to identify it in the Clcockwork output)
+
+    - (optionally) `if?` returning either true or false, depending on whether the database event should run at the given time (this method will be passed the time as a parameter, much like the standard clockwork `:if`)
 
     - (optionally) `tz` returning the timezone to use (default is the local timezone)
 
@@ -219,6 +223,28 @@ end
 end
 ...
 ```
+
+#### Example use of `if?`
+
+Database events support the ability to run events if certain conditions are met. This can be used to only run events on a given day, week, or month, or really any criteria you could conceive. Best of all, these criteria e.g. which day to
+run it on can be attributes on your Model, and therefore change dynamically as you change the Model in the database.
+
+So for example, if you had a Model that had a `day` and `month` integer attribute, you could specify that the Database event should only run on a particular day of a particular month as follows:
+
+```ruby
+# app/models/clockwork_database_event.rb
+class ClockworkDatabaseEvent < ActiveRecord::Base
+
+  ...
+
+  def if?(time)
+    time.day == day && time.month == month
+  end
+
+  ...
+end
+```
+
 
 Event Parameters
 ----------
