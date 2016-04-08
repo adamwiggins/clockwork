@@ -56,3 +56,16 @@ class DatabaseEventModelWithoutName
   include ActiveRecordFake
   attr_accessor :frequency, :at
 end
+
+class DatabaseEventModelWithIf
+  include ActiveRecordFake
+  attr_accessor :name, :frequency, :at, :tz, :if_state
+
+  def name
+    @name || "#{self.class}:#{id}"
+  end
+
+  def if?(time)
+    @if_state
+  end
+end
