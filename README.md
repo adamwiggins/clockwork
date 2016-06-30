@@ -162,7 +162,7 @@ When one of the events is ready to be run (based on it's `frequency`, and possib
 
     - (optionally) `at` return any acceptable clockwork `:at` string
 
-    - (optionally) `name` returning the name for the event (used to identify it in the Clcockwork output)
+    - (optionally) `name` returning the name for the event (used to identify it in the Clockwork output)
 
     - (optionally) `if?` returning either true or false, depending on whether the database event should run at the given time (this method will be passed the time as a parameter, much like the standard clockwork `:if`)
 
