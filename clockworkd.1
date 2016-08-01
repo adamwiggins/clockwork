@@ -1,0 +1,62 @@
+.TH CLOCKWORKD 1 "August 2014" "Ruby Gem" "clockwork"
+
+.SH NAME
+clockworkd - daemon executing clockwork scripts
+
+.SH SYNOPSIS
+\fBclockworkd\fR [-c \fIFILE\fR] [\fIOPTIONS\fR] {start|stop|restart|run}
+
+.SH DESCRIPTION
+\fBclockworkd\fR executes clockwork script as a daemon.
+
+You will need the \fBdaemons\fR gem to use \fBclockworkd\fR. It is not automatically installed, please install by yourself.
+
+.SH OPTIONS
+.TP
+\fB--pid-dir\fR=\fIDIR\fR
+Alternate directory in which to store the process ids. Default is \fIGEM_LOCATION\fR/tmp.
+
+.TP
+\fB-i\fR, \fB--identifier\fR=\fISTR\fR
+An identifier for the process. Default is clock file name.
+
+.TP
+\fB-l\fR, \fB--log\fR
+Redirect both STDOUT and STDERR to a logfile named clockworkd[.\fIidentifier\fR].output in the pid-file directory.
+
+.TP
+\fB--log-dir\fR=\fIDIR\fR
+A specific directory to put the log files into. Default location is pid directory.
+
+.TP
+\fB-m\fR, \fB--monitor\fR
+Start monitor process.
+
+.TP
+\fB-c\fR, \fB--clock\fR=\fIFILE\fR
+Clock .rb file. Default is \fIGEM_LOCATION\fR/clock.rb.
+
+.TP
+\fB-d\fR, \fB--dir\fR=\fIDIR\fR
+Directory to change to once the process starts
+
+.TP
+\fB-h\fR, \fB--help\fR
+Show help message.
+
+.SH BUGS
+If you find a bug, please create an issue \fIhttps://github.com/tomykaira/clockwork/issues\fR.
+
+For a bug fix or a feature request, please send a pull-request. Do not forget to add tests to show how your feature works, or what bug is fixed. All existing tests and new tests must pass (TravisCI is watching).
+
+.SH AUTHORS
+Created by Adam Wiggins.
+
+Inspired by rufus-scheduler and resque-scheduler.
+
+Design assistance from Peter van Hardenberg and Matthew Soldo.
+
+Patches contributed by Mark McGranaghan and Lukáš Konarovský.
+
+.SH SEE ALSO
+\fIhttps://github.com/tomykaira/clockwork\fR.

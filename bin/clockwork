@@ -2,10 +2,9 @@
 
 STDERR.sync = STDOUT.sync = true
 
-require File.expand_path('../../lib/clockwork', __FILE__)
-include Clockwork
+require 'clockwork'
 
-usage = "clockwork <clock.rb>"
+usage = 'clockwork <clock.rb>'
 file = ARGV.shift or abort usage
 
 file = "./#{file}" unless file.match(/^[\/.]/)
@@ -13,8 +12,8 @@ file = "./#{file}" unless file.match(/^[\/.]/)
 require file
 
 trap('INT') do
-	puts "\rExiting"
-	exit
+  puts "\rExiting"
+  exit
 end
 
-run
+Clockwork::run

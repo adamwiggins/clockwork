@@ -1,101 +1,84 @@
 require File.expand_path('../../lib/clockwork', __FILE__)
-require 'contest'
-require 'mocha'
-require 'time'
+require 'minitest/autorun'
+require 'mocha/setup'
 
-module Clockwork
-	def log(msg)
-	end
-end
+describe Clockwork do
+  before do
+    @log_output = StringIO.new
+    Clockwork.configure do |config|
+      config[:sleep_timeout] = 0
+      config[:logger] = Logger.new(@log_output)
+    end
+  end
 
-class ClockworkTest < Test::Unit::TestCase
-	setup do
-		Clockwork.clear!
-		Clockwork.handler { }
-	end
+  after do
+    Clockwork.clear!
+  end
 
-	def assert_will_run(t)
-		assert_equal 1, Clockwork.tick(t).size
-	end
+  it 'should run events with configured logger' do
+    run = false
+    Clockwork.handler do |job|
+      run = job == 'myjob'
+    end
+    Clockwork.every(1.minute, 'myjob')
+    Clockwork.manager.expects(:loop).yields.then.returns
+    Clockwork.run
 
-	def assert_wont_run(t)
-		assert_equal 0, Clockwork.tick(t).size
-	end
+    assert run
+    assert @log_output.string.include?('Triggering')
+  end
 
-	test "once a minute" do
-		Clockwork.every(1.minute, 'myjob')
+  it 'should log event correctly' do
+    run = false
+    Clockwork.handler do |job|
+      run = job == 'an event'
+    end
+    Clockwork.every(1.minute, 'an event')
+    Clockwork.manager.expects(:loop).yields.then.returns
+    Clockwork.run
+    assert run
+    assert @log_output.string.include?("Triggering 'an event'")
+  end
 
-		assert_will_run(t=Time.now)
-		assert_wont_run(t+30)
-		assert_will_run(t+60)
-	end
+  it 'should pass event without modification to handler' do
+    event_object = Object.new
+    run = false
+    Clockwork.handler do |job|
+      run = job == event_object
+    end
+    Clockwork.every(1.minute, event_object)
+    Clockwork.manager.expects(:loop).yields.then.returns
+    Clockwork.run
+    assert run
+  end
 
-	test "every three minutes" do
-		Clockwork.every(3.minutes, 'myjob')
+  it 'should not run anything after reset' do
+    Clockwork.every(1.minute, 'myjob') {  }
+    Clockwork.clear!
+    Clockwork.configure do |config|
+      config[:sleep_timeout] = 0
+      config[:logger] = Logger.new(@log_output)
+    end
+    Clockwork.manager.expects(:loop).yields.then.returns
+    Clockwork.run
+    assert @log_output.string.include?('0 events')
+  end
 
-		assert_will_run(t=Time.now)
-		assert_wont_run(t+2*60)
-		assert_will_run(t+3*60)
-	end
+  it 'should pass all arguments to every' do
+    Clockwork.every(1.second, 'myjob', if: lambda { |_| false }) {  }
+    Clockwork.manager.expects(:loop).yields.then.returns
+    Clockwork.run
+    assert @log_output.string.include?('1 events')
+    assert !@log_output.string.include?('Triggering')
+  end
 
-	test "once an hour" do
-		Clockwork.every(1.hour, 'myjob')
-
-		assert_will_run(t=Time.now)
-		assert_wont_run(t+30*60)
-		assert_will_run(t+60*60)
-	end
-
-	test "once a day at 16:20" do
-		Clockwork.every(1.day, 'myjob', :at => '16:20')
-
-		assert_wont_run Time.parse('jan 1 2010 16:19:59')
-		assert_will_run Time.parse('jan 1 2010 16:20:00')
-		assert_wont_run Time.parse('jan 1 2010 16:20:01')
-		assert_wont_run Time.parse('jan 2 2010 16:19:59')
-		assert_will_run Time.parse('jan 2 2010 16:20:00')
-	end
-
-	test "aborts when no handler defined" do
-		Clockwork.clear!
-		assert_raise(Clockwork::NoHandlerDefined) do
-			Clockwork.every(1.minute, 'myjob')
-		end
-	end
-
-	test "aborts when fails to parse" do
-		assert_raise(Clockwork::FailedToParse) do
-			Clockwork.every(1.day, "myjob", :at => "a:bc")
-		end
-	end
-
-	test "general handler" do
-		$set_me = 0
-		Clockwork.handler { $set_me = 1 }
-		Clockwork.every(1.minute, 'myjob')
-		Clockwork.tick(Time.now)
-		assert_equal 1, $set_me
-	end
-
-	test "event-specific handler" do
-		$set_me = 0
-		Clockwork.every(1.minute, 'myjob') { $set_me = 2 }
-		Clockwork.tick(Time.now)
-		assert_equal 2, $set_me
-	end
-
-	test "exceptions are trapped and logged" do
-		Clockwork.handler { raise 'boom' }
-		event = Clockwork.every(1.minute, 'myjob')
-		event.expects(:log_error)
-		assert_nothing_raised { Clockwork.tick(Time.now) }
-	end
-
-	test "exceptions still set the last timestamp to avoid spastic error loops" do
-		Clockwork.handler { raise 'boom' }
-		event = Clockwork.every(1.minute, 'myjob')
-		event.stubs(:log_error)
-		Clockwork.tick(t = Time.now)
-		assert_equal t, event.last
-	end
+  it 'support module re-open style' do
+    $called = false
+    module ::Clockwork
+      every(1.second, 'myjob') { $called = true }
+    end
+    Clockwork.manager.expects(:loop).yields.then.returns
+    Clockwork.run
+    assert $called
+  end
 end

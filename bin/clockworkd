@@ -1,0 +1,91 @@
+#!/usr/bin/env ruby
+
+STDERR.sync = STDOUT.sync = true
+
+require 'clockwork'
+require 'optparse'
+
+begin
+  require 'daemons'
+rescue LoadError
+  raise "You need to add gem 'daemons' to your Gemfile or Rubygems if you wish to use it."
+end
+
+@options = {
+  :quiet => false,
+  :pid_dir => File.expand_path("./tmp"),
+  :log_output => false,
+  :monitor => false,
+  :file => File.expand_path("./clock.rb")
+}
+
+bin_basename = File.basename($0)
+
+opts = OptionParser.new do |opts|
+  opts.banner = "Usage: #{bin_basename} -c FILE [options] start|stop|restart|run"
+  opts.separator ''
+  opts.on_tail('-h', '--help', 'Show this message') do
+    puts opts
+    exit 1
+  end
+  opts.on("--pid-dir=DIR", "Alternate directory in which to store the process ids. Default is #{@options[:pid_dir]}.") do |dir|
+    @options[:pid_dir] = dir
+  end
+  opts.on('-i', '--identifier=STR', 'An identifier for the process. Default is clock file name.') do |n|
+    @options[:identifier] = n
+  end
+  opts.on('-l', '--log', "Redirect both STDOUT and STDERR to a logfile named #{bin_basename}[.<identifier>].output in the pid-file directory.") do
+    @options[:log_output] = true
+  end
+  opts.on('--log-dir=DIR', 'A specific directory to put the log files into (default location is pid directory).') do | log_dir|
+    @options[:log_dir] = File.expand_path(log_dir)
+  end
+  opts.on('-m', '--monitor', 'Start monitor process.') do
+    @options[:monitor] = true
+  end
+  opts.on('-c', '--clock=FILE',"Clock .rb file. Default is #{@options[:file]}.") do |clock_file|
+    @options[:file] = clock_file
+    @options[:file] = "./#{@options[:file]}" unless @options[:file].match(/^[\/.]/)
+    @options[:file] = File.expand_path(@options[:file])
+  end
+  opts.on('-d', '--dir=DIR', 'Directory to change to once the process starts') do |dir|
+    @options[:current_dir] = File.expand_path(dir)
+  end
+end
+
+@args = opts.parse!(ARGV)
+
+def optparser_abort(opts,message)
+  $stderr.puts message
+  puts opts
+  exit 1
+end
+
+optparser_abort opts, "ERROR: --clock=FILE is required." unless @options[:file]
+optparser_abort opts, "ERROR: clock file #{@options[:file]} does not exist." unless File.exists?(@options[:file])
+optparser_abort opts, "ERROR: File extension specified in --clock must be '.rb'" unless File.extname(@options[:file]) == ".rb"
+
+@options[:identifier]  ||= "#{File.basename(@options[:file],'.*')}"
+process_name = "#{bin_basename}.#{@options[:identifier]}"
+
+@options[:log_dir] ||= @options[:pid_dir]
+
+Dir.mkdir(@options[:pid_dir]) unless File.exists?(@options[:pid_dir])
+Dir.mkdir(@options[:log_dir]) unless File.exists?(@options[:log_dir])
+
+puts "#{process_name}: pid file: #{File.expand_path(File.join(@options[:pid_dir],process_name + '.pid'))}"
+
+if @options[:log_output]
+  puts "#{process_name}: output log file: #{File.expand_path(File.join(@options[:log_dir],process_name + '.output'))}"
+else
+  puts "#{process_name}: No output will be printed out (run with --log if needed)"
+end
+
+Daemons.run_proc(process_name, :dir => @options[:pid_dir], :dir_mode => :normal, :monitor => @options[:monitor], :log_dir => @options[:log_dir], :log_output => @options[:log_output], :ARGV => @args) do |*args|
+  # daemons changes the current working directory to '/' when a new process is
+  # forked. We change it back to the project root directory here.
+  Dir.chdir(@options[:current_dir]) if @options[:current_dir]
+  require @options[:file]
+
+  Clockwork::run
+end
