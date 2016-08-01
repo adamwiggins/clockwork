@@ -463,8 +463,8 @@ every(1.day, 'check.leap.year') do
 end
 ```
 
-In addition, Clockwork also supports `:before_tick` and `after_tick` callbacks.
-They are optional, and run every tick (a tick being whatever your `:sleep_timeout`
+In addition, Clockwork also supports `:before_tick`, `:after_tick`, `:before_run`, and `:after_run` callbacks.
+All callbacks are optional. The `tick` callbacks run every tick (a tick being whatever your `:sleep_timeout`
 is set to, default is 1 second):
 
 ```ruby
@@ -474,6 +474,14 @@ end
 
 on(:after_tick) do
   puts "tock"
+end
+
+on(:before_run) do |event, t|
+  puts "job_started: #{event}"
+end
+
+on(:after_run) do |event, t|
+  puts "job_finished: #{event}"
 end
 ```
 
