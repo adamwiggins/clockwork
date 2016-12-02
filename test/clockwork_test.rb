@@ -56,6 +56,16 @@ class ClockworkTest < Test::Unit::TestCase
 		assert_will_run Time.parse('jan 2 2010 16:20:00')
 	end
 
+	test "once an hour at **:20" do
+		Clockwork.every(1.hour, 'myjob', :at => '**:20')
+
+		assert_wont_run Time.parse('jan 1 2010 15:19:59')
+		assert_will_run Time.parse('jan 1 2010 15:20:00')
+		assert_wont_run Time.parse('jan 1 2010 15:20:01')
+		assert_wont_run Time.parse('jan 2 2010 16:19:59')
+		assert_will_run Time.parse('jan 2 2010 16:20:00')
+	end
+
 	test "aborts when no handler defined" do
 		Clockwork.clear!
 		assert_raise(Clockwork::NoHandlerDefined) do
