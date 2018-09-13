@@ -65,7 +65,7 @@ For example, if you're using Beanstalk/Staker:
 Using a queueing system which doesn't require that your full application be
 loaded is preferable, because the clock process can keep a tiny memory
 footprint.  If you're using DJ or Resque, however, you can go ahead and load
-your full application enviroment, and use per-event blocks to call DJ or Resque
+your full application environment, and use per-event blocks to call DJ or Resque
 enqueue methods.  For example, with DJ/Rails:
 
     require 'config/boot'
